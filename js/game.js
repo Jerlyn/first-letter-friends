@@ -1,4 +1,35 @@
-// Game state
+// Function to get a fun fact about an animal for toddlers
+function getAnimalFunFact(animalName) {
+    const funFacts = {
+        'Alligator': 'Hint: This animal has lots of sharp teeth and lives in swamps!',
+        'Butterfly': 'Hint: This colorful animal used to be a caterpillar!',
+        'Cheetah': 'Hint: This animal is the fastest runner in the world!',
+        'Dolphin': 'Hint: This animal is very smart and loves to swim and jump in the ocean!',
+        'Elephant': 'Hint: This animal has a very long nose called a trunk!',
+        'Fox': 'Hint: This animal is clever and has a bushy tail!',
+        'Goat': 'Hint: This animal loves to climb and eat grass!',
+        'Hamster': 'Hint: This small, furry animal likes to keep food in its cheeks!',
+        'Iguana': 'Hint: This animal is like a little dragon with scaly skin!',
+        'Jellyfish': 'Hint: This animal lives in the ocean and has squishy tentacles!',
+        'Kangaroo': 'Hint: This animal has a pouch for carrying its babies!',
+        'Lion': 'Hint: This animal is called the king of the jungle!',
+        'Monkey': 'Hint: This animal loves to climb trees and eat bananas!',
+        'Narwhal': 'Hint: This animal looks like a unicorn of the sea!',
+        'Owl': 'Hint: This animal is awake at night and can turn its head all the way around!',
+        'Pig': 'Hint: This animal says oink-oink and loves to roll in mud!',
+        'Quail': 'Hint: This small bird has a cute little feather on top of its head!',
+        'Rhino': 'Hint: This big animal has a horn on its nose!',
+        'Spider': 'Hint: This small animal makes webs to catch bugs!',
+        'Turtle': 'Hint: This animal carries its house on its back!',
+        'Umbrellabird': 'Hint: This bird has feathers on its head that look like an umbrella!',
+        'Vulture': 'Hint: This big bird soars high in the sky looking for food!',
+        'Walrus': 'Hint: This animal has long tusks and loves to swim in cold water!',
+        'Yak': 'Hint: This animal is like a big, hairy cow that lives in the mountains!',
+        'Zebra': 'Hint: This animal has black and white stripes all over its body!'
+    };
+    
+    return funFacts[animalName] || `Hint: I'm thinking of a fun animal!`;
+}// Game state
 const gameState = {
     animals: [
         {name: 'Alligator', image: 'alligator.png'},
@@ -111,21 +142,25 @@ function loadNextAnimal() {
     // Reset word display
     wordDisplay.textContent = '';
     
+    // Remove old hint if exists
+    const oldHint = document.querySelector('.learning-hint');
+    if (oldHint) oldHint.remove();
+    
     // Show hint if in learning mode
     if (learningModeToggle && learningModeToggle.checked) {
-        const firstLetter = gameState.currentAnimal.name.charAt(0).toUpperCase();
+        // Get a fun fact instead of directly revealing the first letter
+        const funFact = getAnimalFunFact(gameState.currentAnimal.name);
         
-        // Remove old hint if exists
-        const oldHint = document.querySelector('.learning-hint');
-        if (oldHint) oldHint.remove();
-        
-        // Create and add new hint
+        // Create new hint element
         const hintElement = document.createElement('div');
         hintElement.className = 'learning-hint';
-        hintElement.textContent = `Hint: This animal starts with "${firstLetter}"`;
+        hintElement.textContent = funFact;
         
+        // Get the animal container
         const animalContainer = document.querySelector('.animal-container');
-        animalContainer.parentNode.insertBefore(hintElement, animalContainer);
+        
+        // Insert hint AFTER the animal container (not before)
+        animalContainer.insertAdjacentElement('afterend', hintElement);
     }
     
     // Re-enable all keyboard keys and reset their styling
@@ -352,22 +387,24 @@ function setupSharingButtons(correct, wrong) {
     const facebookBtn = document.getElementById('share-facebook-btn');
     const copyBtn = document.getElementById('copy-result-btn');
     
+    const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
+    
     if (twitterBtn) {
         twitterBtn.addEventListener('click', () => {
             const text = `I scored ${correct} correct and ${wrong} wrong in First Letter Friends! Can you beat my score? #FirstLetterFriends`;
-            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
         });
     }
     
     if (facebookBtn) {
         facebookBtn.addEventListener('click', () => {
-            window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location.href), '_blank');
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
         });
     }
     
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
-            const text = `I scored ${correct} correct and ${wrong} wrong in First Letter Friends!`;
+            const text = `I scored ${correct} correct and ${wrong} wrong in First Letter Friends! Try it yourself: ${shareUrl}`;
             navigator.clipboard.writeText(text).then(() => {
                 alert('Result copied to clipboard!');
             }).catch(err => {

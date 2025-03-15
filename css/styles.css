@@ -93,7 +93,7 @@ h3 {
 }
 
 .animal-container {
-    background-color: var(--light-blue);
+    background-color: white; /* Changed from light blue to white */
     border-radius: 50%;
     width: 220px;
     height: 220px;
@@ -164,15 +164,19 @@ h3 {
 
 .learning-hint {
     font-size: calc(1.2rem * var(--font-scale));
-    margin-bottom: 0.8rem;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
     color: var(--primary-color);
     font-weight: 700;
     text-align: center;
     font-family: var(--font-family-heading);
     background-color: rgba(176, 216, 240, 0.3);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    border-radius: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Keyboard */
