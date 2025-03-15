@@ -63,15 +63,16 @@ function initGame() {
     gameState.wrongAnswers = 0;
     gameState.startTime = Date.now();
     
-    // Set up the first animal
-    loadNextAnimal();
-    
     // Create keyboard
     createKeyboard();
     
     // Set up event listeners
     instructionsBtn.addEventListener('click', showInstructions);
-    closeInstructionsBtn.addEventListener('click', hideInstructions);
+    closeInstructionsBtn.addEventListener('click', () => {
+        hideInstructions();
+        // Start the game after closing instructions
+        loadNextAnimal();
+    });
     leaderboardBtn.addEventListener('click', showLeaderboard);
     
     if (playAgainBtn) {
@@ -82,8 +83,11 @@ function initGame() {
         playAgainFromScoreBtn.addEventListener('click', restartGame);
     }
     
-    // Show instructions on first visit or at the start of each game
+    // Always start with instructions first
     showInstructions();
+    
+    // Don't load the first animal until instructions are closed
+    // This will be called in the closeInstructions handler
 }
 
 // Load the next animal
@@ -124,9 +128,10 @@ function loadNextAnimal() {
         animalContainer.parentNode.insertBefore(hintElement, animalContainer);
     }
     
-    // Re-enable all keyboard keys
+    // Re-enable all keyboard keys and reset their styling
     document.querySelectorAll('.key').forEach(key => {
         key.disabled = false;
+        key.classList.remove('correct', 'wrong', 'absent', 'present');
     });
 }
 
@@ -170,7 +175,7 @@ function handleKeyPress(letter) {
     if (letter === correctLetter) {
         handleCorrectAnswer();
     } else {
-        handleWrongAnswer();
+        handleWrongAnswer(letter);
     }
 }
 
@@ -197,7 +202,7 @@ function handleCorrectAnswer() {
 }
 
 // Handle wrong answer
-function handleWrongAnswer() {
+function handleWrongAnswer(letter) {
     gameState.guessesRemaining--;
     gameState.wrongAnswers++;
     
@@ -209,6 +214,13 @@ function handleWrongAnswer() {
     // Show feedback
     feedbackText.textContent = 'Try again';
     feedbackText.classList.remove('hidden');
+    feedbackText.style.color = 'var(--incorrect-color)';
+    
+    // Mark the key as wrong - use new wrong class instead of absent
+    const wrongKey = document.querySelector(`.key[data-key="${letter}"]`);
+    if (wrongKey) {
+        wrongKey.classList.add('wrong');
+    }
     
     // If out of guesses, show correct answer and move on
     if (gameState.guessesRemaining <= 0) {
@@ -228,8 +240,14 @@ function displayWord() {
     const firstLetter = animalName.charAt(0);
     const restOfWord = animalName.slice(1).toLowerCase();
     
-    // Create the display with appropriate styling
+    // Create the display with appropriate styling - first letter underlined and green
     wordDisplay.innerHTML = `<span class="first-letter">${firstLetter}</span>${restOfWord}`;
+    
+    // Update key styling to show the correct letter
+    const correctKey = document.querySelector(`.key[data-key="${firstLetter.toUpperCase()}"]`);
+    if (correctKey) {
+        correctKey.classList.add('correct');
+    }
 }
 
 // Disable keyboard
@@ -267,11 +285,23 @@ function endGame() {
 // Show instructions modal
 function showInstructions() {
     instructionsModal.style.display = 'flex';
+    
+    // Make sure game container is hidden while instructions are showing
+    const gameScreen = document.getElementById('game-screen');
+    if (gameScreen) {
+        gameScreen.classList.remove('active');
+    }
 }
 
 // Hide instructions modal
 function hideInstructions() {
     instructionsModal.style.display = 'none';
+    
+    // Show game screen after instructions are closed
+    const gameScreen = document.getElementById('game-screen');
+    if (gameScreen) {
+        gameScreen.classList.add('active');
+    }
 }
 
 // Show score screen
