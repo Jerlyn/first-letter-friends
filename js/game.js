@@ -1,35 +1,4 @@
-// Function to get a fun fact about an animal for toddlers
-function getAnimalFunFact(animalName) {
-    const funFacts = {
-        'Alligator': 'Hint: This animal has lots of sharp teeth and lives in swamps!',
-        'Butterfly': 'Hint: This colorful animal used to be a caterpillar!',
-        'Cheetah': 'Hint: This animal is the fastest runner in the world!',
-        'Dolphin': 'Hint: This animal is very smart and loves to swim and jump in the ocean!',
-        'Elephant': 'Hint: This animal has a very long nose called a trunk!',
-        'Fox': 'Hint: This animal is clever and has a bushy tail!',
-        'Goat': 'Hint: This animal loves to climb and eat grass!',
-        'Hamster': 'Hint: This small, furry animal likes to keep food in its cheeks!',
-        'Iguana': 'Hint: This animal is like a little dragon with scaly skin!',
-        'Jellyfish': 'Hint: This animal lives in the ocean and has squishy tentacles!',
-        'Kangaroo': 'Hint: This animal has a pouch for carrying its babies!',
-        'Lion': 'Hint: This animal is called the king of the jungle!',
-        'Monkey': 'Hint: This animal loves to climb trees and eat bananas!',
-        'Narwhal': 'Hint: This animal looks like a unicorn of the sea!',
-        'Owl': 'Hint: This animal is awake at night and can turn its head all the way around!',
-        'Pig': 'Hint: This animal says oink-oink and loves to roll in mud!',
-        'Quail': 'Hint: This small bird has a cute little feather on top of its head!',
-        'Rhino': 'Hint: This big animal has a horn on its nose!',
-        'Spider': 'Hint: This small animal makes webs to catch bugs!',
-        'Turtle': 'Hint: This animal carries its house on its back!',
-        'Umbrellabird': 'Hint: This bird has feathers on its head that look like an umbrella!',
-        'Vulture': 'Hint: This big bird soars high in the sky looking for food!',
-        'Walrus': 'Hint: This animal has long tusks and loves to swim in cold water!',
-        'Yak': 'Hint: This animal is like a big, hairy cow that lives in the mountains!',
-        'Zebra': 'Hint: This animal has black and white stripes all over its body!'
-    };
-    
-    return funFacts[animalName] || `Hint: I'm thinking of a fun animal!`;
-}// Game state
+// Game state
 const gameState = {
     animals: [
         {name: 'Alligator', image: 'alligator.png'},
@@ -81,6 +50,39 @@ const playAgainFromScoreBtn = document.getElementById('play-again-from-score-btn
 
 // Sound effects
 const soundEnabled = true;
+
+// Function to get a fun fact about an animal for toddlers
+function getAnimalFunFact(animalName) {
+    const funFacts = {
+        'Alligator': 'Hint: This animal has lots of sharp teeth and lives in swamps!',
+        'Butterfly': 'Hint: This colorful animal used to be a caterpillar!',
+        'Cheetah': 'Hint: This animal is the fastest runner in the world!',
+        'Dolphin': 'Hint: This animal is very smart and loves to swim and jump in the ocean!',
+        'Elephant': 'Hint: This animal has a very long nose called a trunk!',
+        'Fox': 'Hint: This animal is clever and has a bushy tail!',
+        'Goat': 'Hint: This animal loves to climb and eat grass!',
+        'Hamster': 'Hint: This small, furry animal likes to keep food in its cheeks!',
+        'Iguana': 'Hint: This animal is like a little dragon with scaly skin!',
+        'Jellyfish': 'Hint: This animal lives in the ocean and has squishy tentacles!',
+        'Kangaroo': 'Hint: This animal has a pouch for carrying its babies!',
+        'Lion': 'Hint: This animal is called the king of the jungle!',
+        'Monkey': 'Hint: This animal loves to climb trees and eat bananas!',
+        'Narwhal': 'Hint: This animal looks like a unicorn of the sea!',
+        'Owl': 'Hint: This animal is awake at night and can turn its head all the way around!',
+        'Pig': 'Hint: This animal says oink-oink and loves to roll in mud!',
+        'Quail': 'Hint: This small bird has a cute little feather on top of its head!',
+        'Rhino': 'Hint: This big animal has a horn on its nose!',
+        'Spider': 'Hint: This small animal makes webs to catch bugs!',
+        'Turtle': 'Hint: This animal carries its house on its back!',
+        'Umbrellabird': 'Hint: This bird has feathers on its head that look like an umbrella!',
+        'Vulture': 'Hint: This big bird soars high in the sky looking for food!',
+        'Walrus': 'Hint: This animal has long tusks and loves to swim in cold water!',
+        'Yak': 'Hint: This animal is like a big, hairy cow that lives in the mountains!',
+        'Zebra': 'Hint: This animal has black and white stripes all over its body!'
+    };
+    
+    return funFacts[animalName] || `Hint: I'm thinking of a fun animal!`;
+}
 
 // Initialize the game
 function initGame() {
@@ -518,7 +520,8 @@ if (learningModeToggle) {
     learningModeToggle.addEventListener('change', () => {
         // If turning on learning mode, show hint for current animal
         if (learningModeToggle.checked && gameState.currentAnimal) {
-            const firstLetter = gameState.currentAnimal.name.charAt(0).toUpperCase();
+            // Get a fun fact instead of directly revealing the first letter
+            const funFact = getAnimalFunFact(gameState.currentAnimal.name);
             
             // Remove old hint if exists
             const oldHint = document.querySelector('.learning-hint');
@@ -527,10 +530,11 @@ if (learningModeToggle) {
             // Create and add new hint
             const hintElement = document.createElement('div');
             hintElement.className = 'learning-hint';
-            hintElement.textContent = `Hint: This animal starts with "${firstLetter}"`;
+            hintElement.textContent = funFact;
             
+            // Get the animal container and add the hint after it
             const animalContainer = document.querySelector('.animal-container');
-            animalContainer.parentNode.insertBefore(hintElement, animalContainer);
+            animalContainer.insertAdjacentElement('afterend', hintElement);
         } else {
             // If turning off, remove hint
             const oldHint = document.querySelector('.learning-hint');
@@ -560,11 +564,20 @@ function restartGame() {
         screen.classList.remove('active');
     });
     
-    // Show game screen
-    document.getElementById('game-screen').classList.add('active');
-    
     // Initialize game
     initGame();
+}
+
+// Function to save score - defined in leaderboard.js but needed for reference
+function saveScore(timeElapsed) {
+    // This function is implemented in leaderboard.js
+    // It saves the player's score to localStorage
+}
+
+// Function to display leaderboard - defined in leaderboard.js but needed for reference
+function displayLeaderboard() {
+    // This function is implemented in leaderboard.js
+    // It renders the leaderboard from localStorage data
 }
 
 // Initialize the game when the page loads

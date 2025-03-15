@@ -163,18 +163,18 @@ h3 {
 }
 
 .learning-hint {
-    font-size: calc(1.2rem * var(--font-scale));
+    font-size: calc(0.8rem * var(--font-scale)); /* Match the copyright font size */
     margin-top: 0.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     color: var(--primary-color);
-    font-weight: 700;
+    font-weight: 600; /* Slightly reduced from 700 for smaller text */
     text-align: center;
     font-family: var(--font-family-heading);
     background-color: rgba(176, 216, 240, 0.3);
-    padding: 0.8rem 1.2rem;
-    border-radius: 12px;
+    padding: 0.5rem 0.8rem; /* Tightened padding for mobile */
+    border-radius: 8px; /* Slightly smaller radius */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    max-width: 90%;
+    max-width: 95%; /* Slightly wider for smaller text */
     margin-left: auto;
     margin-right: auto;
 }
