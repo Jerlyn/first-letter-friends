@@ -1,0 +1,178 @@
+/* Add these styles to your styles.css file */
+
+/* Progress indicator */
+.progress-indicator {
+    font-family: var(--font-family-heading);
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    background-color: rgba(176, 216, 240, 0.2);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+/* Vowel keys */
+.key.vowel {
+    background-color: rgba(176, 216, 240, 0.6);
+    font-weight: 700;
+}
+
+.key.vowel:hover {
+    background-color: rgba(176, 216, 240, 0.8);
+}
+
+/* Animal share button */
+.animal-share-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    z-index: 5;
+}
+
+.animal-share-btn:hover {
+    background-color: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
+}
+
+/* Achievement share button */
+.achievement-share-btn {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.achievement-badge:hover .achievement-share-btn {
+    opacity: 1;
+}
+
+/* Sharing modal */
+.sharing-content {
+    padding: 1.5rem;
+}
+
+.sharing-content p {
+    margin: 1rem 0;
+    text-align: left;
+    font-size: 0.9rem;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+/* Confetti animation */
+.confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #f00;
+    top: -10px;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* Landscape tablet layout */
+@media (min-width: 768px) and (orientation: landscape) {
+    /* Overall layout */
+    .game-area {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+        max-width: 900px;
+    }
+    
+    /* Learning mode toggle at top */
+    .learning-mode-toggle {
+        width: 100%;
+        order: 1;
+    }
+    
+    /* Progress indicator at top */
+    .progress-indicator {
+        width: 100%;
+        order: 2;
+    }
+    
+    /* Question at top */
+    .question {
+        width: 100%;
+        order: 3;
+    }
+    
+    /* Animal container on left */
+    .animal-container {
+        order: 4;
+        margin-right: 2rem;
+    }
+    
+    /* Hint below animal */
+    .learning-hint {
+        order: 6;
+        max-width: 220px;
+        margin-top: 1rem;
+    }
+    
+    /* Keyboard on right */
+    .keyboard {
+        order: 5;
+        width: 60%;
+        max-width: 600px;
+    }
+    
+    /* Word display below keyboard */
+    .word-display {
+        order: 7;
+        width: 100%;
+    }
+    
+    /* Footer at bottom */
+    footer {
+        order: 9;
+    }
+}

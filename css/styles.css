@@ -538,3 +538,37 @@ footer {
         height: 50px;
     }
 }
+/* Word display centering */
+.word-display {
+    font-size: calc(1.8rem * var(--font-scale));
+    letter-spacing: 4px;
+    margin: 1.2rem 0;
+    font-family: var(--font-family-heading);
+    font-weight: 700;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Make sure the first letter highlight still works */
+.first-letter {
+    color: var(--correct-color);
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+/* Ensure buttons within word display are properly aligned */
+.word-display button {
+    align-self: center;
+}
+
+/* In landscape mode, ensure word is still centered */
+@media (min-width: 768px) and (orientation: landscape) {
+    .word-display {
+        width: 100%;
+        order: 7;
+        justify-content: center;
+    }
+}

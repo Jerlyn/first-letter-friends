@@ -1,0 +1,43 @@
+/* Ensure word display can appear in different places */
+.word-display {
+    font-size: calc(1.8rem * var(--font-scale));
+    letter-spacing: 4px;
+    margin: 0.8rem 0;
+    font-family: var(--font-family-heading);
+    font-weight: 700;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Add specific spacing when under animal */
+.animal-container + .word-display {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Add spacing when hint follows word */
+.word-display + .learning-hint {
+    margin-top: 0.5rem;
+}
+
+/* Update landscape layout ordering */
+@media (min-width: 768px) and (orientation: landscape) {
+    .animal-container + .word-display {
+        width: 220px;
+        max-width: 220px;
+        order: 5;
+        margin-right: 2rem;
+    }
+    
+    .word-display + .learning-hint {
+        order: 6;
+    }
+    
+    /* This ensures the keyboard still appears in right position */
+    .keyboard {
+        order: 7;
+    }
+}
