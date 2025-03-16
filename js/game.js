@@ -88,6 +88,16 @@ function getAnimalFunFact(animalName) {
     return funFacts[animalName] || `Hint: I'm thinking of a fun animal!`;
 }
 
+// Handler function for learning mode toggle
+function handleLearningModeToggle() {
+    if (this.checked) {
+        showHint();
+        gameState.hintsUsed++;
+    } else {
+        hideHint();
+    }
+}
+
 // Initialize the game
 function initGame() {
     // Shuffle all animals
@@ -134,18 +144,17 @@ function initGame() {
     
     // Set up learning mode toggle
     if (learningModeToggle) {
-        learningModeToggle.addEventListener('change', function() {
-            if (this.checked) {
-                showHint();
-                gameState.hintsUsed++;
-            } else {
-                hideHint();
-            }
-        });
+        // Remove any existing listeners to prevent duplicates
+        learningModeToggle.removeEventListener('change', handleLearningModeToggle);
         
-        // Check if auto-hints is enabled
+        // Add listener with named function so we can remove it if needed
+        learningModeToggle.addEventListener('change', handleLearningModeToggle);
+        
+        // Check if auto-hints is enabled and update checkbox state accordingly
         const preferences = JSON.parse(localStorage.getItem('accessibilityPreferences') || '{}');
-        if (preferences.autoHints) {
+        
+        // Set initial state without triggering the change event
+        if (preferences.autoHints && !learningModeToggle.checked) {
             learningModeToggle.checked = true;
         }
     }
@@ -268,10 +277,31 @@ function loadNextAnimal() {
     const oldHint = document.querySelector('.learning-hint');
     if (oldHint) oldHint.remove();
     
-    // Show hint if learning mode is checked or auto-hints is enabled
+    // Get accessibility preferences
     const preferences = JSON.parse(localStorage.getItem('accessibilityPreferences') || '{}');
-    if ((learningModeToggle && learningModeToggle.checked) || preferences.autoHints) {
-        showHint();
+
+    // Only show hint if learning mode is checked OR auto-hints is enabled
+    // Also ensure checkbox state matches the auto-hints preference
+    if (learningModeToggle) {
+        // Update checkbox state based on auto-hints preference 
+        // without triggering the change event
+        if (preferences.autoHints && !learningModeToggle.checked) {
+            // Set checked state without triggering change event
+            learningModeToggle.checked = true;
+            // Since we changed programmatically, increment hint counter
+            gameState.hintsUsed++;
+        }
+        
+        // Only show hint if checkbox is actually checked now
+        if (learningModeToggle.checked) {
+            showHint();
+        }
+    } else {
+        // If toggle doesn't exist but auto-hints is enabled, show hint
+        if (preferences.autoHints) {
+            showHint();
+            gameState.hintsUsed++;
+        }
     }
     
     // Re-enable all keyboard keys and reset their styling

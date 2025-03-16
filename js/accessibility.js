@@ -71,8 +71,10 @@ function showAccessibilityOptions() {
                     <input type="checkbox" id="auto-hints">
                 </div>
                 
-                <button id="save-accessibility" class="primary-btn">Save Preferences</button>
-                <button id="close-accessibility" class="secondary-btn">Cancel</button>
+                <div class="button-container-accessibility">
+                    <button id="save-accessibility" class="primary-btn">Save Preferences</button>
+                    <button id="close-accessibility" class="secondary-btn">Cancel</button>
+                </div>
             </div>
         `;
         
@@ -208,14 +210,22 @@ function applyAccessibilityPreferences() {
         document.documentElement.classList.remove('reduced-motion');
     }
     
-    // Apply auto hints
+    // Apply auto hints - ensure we update the checkbox state
+    // but without showing hints if checkbox was manually unchecked
     if (preferences.autoHints && window.learningModeToggle) {
-        window.learningModeToggle.checked = true;
-        
-        // If the showHint function exists, call it
-        if (typeof showHint === 'function') {
-            showHint();
+        if (!window.learningModeToggle.checked) {
+            // Only set checkbox if it's not already checked
+            window.learningModeToggle.checked = true;
+            
+            // Show hint since we're enabling it
+            if (typeof showHint === 'function') {
+                showHint();
+            }
         }
+    } else if (!preferences.autoHints && window.learningModeToggle && window.learningModeToggle.checked) {
+        // If auto-hints is disabled but checkbox is checked, 
+        // leave it checked (user preference)
+        // Do nothing here, respect user's manual choice
     }
 }
 

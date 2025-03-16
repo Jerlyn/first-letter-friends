@@ -1322,3 +1322,61 @@ footer {
 #feedback-text {
     display: none;
 }
+/* Center buttons in accessibility modal */
+.modal-content .secondary-btn {
+    margin: 0 auto;
+    display: block;
+    min-width: 120px; /* Match the primary button width */
+}
+
+/* ===== BUTTON LAYOUT IMPROVEMENTS ===== */
+
+/* Separate button container for accessibility modal */
+.button-container-accessibility {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    width: 100%;
+}
+
+.button-container-accessibility .primary-btn,
+.button-container-accessibility .secondary-btn {
+    width: 80%; /* Make buttons wider */
+    max-width: 250px; /* Limit maximum width */
+    margin: 0.25rem 0;
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+/* Stack buttons in leaderboard screen */
+.button-container {
+    display: flex;
+    flex-direction: column; /* Change to column for stacked layout */
+    align-items: center;
+    gap: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+}
+
+.button-container .back-btn,
+.button-container .primary-btn {
+    width: 90%; /* Increased width to fit longer text */
+    max-width: 300px; /* Increased max width */
+    margin: 0.25rem 0; /* Adjust vertical spacing */
+    white-space: nowrap; /* Prevent text wrapping */
+    font-size: calc(1rem * var(--font-scale)); /* Consistent font size */
+    text-align: center; /* Center text */
+    justify-content: center; /* Center content for flex */
+    padding: 0.85rem 1rem; /* Adjusted padding to be more consistent */
+}
+
+/* Global button fixes to prevent text wrapping */
+.primary-btn, 
+.secondary-btn,
+.back-btn {
+    white-space: nowrap; /* Prevent text wrapping for all buttons */
+    overflow: hidden; /* Hide overflow if needed */
+    text-overflow: ellipsis; /* Show ellipsis if text overflows */
+    min-width: 150px; /* Ensure minimum width */
+    font-size: calc(1rem * var(--font-scale)); /* Consistent font size */
+}
