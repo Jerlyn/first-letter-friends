@@ -34,6 +34,9 @@ const gameState = {
     wrongAnswers: 0,
     startTime: null,
     shuffledAnimals: [],
+    leaderboardOrigin: 'game', // Track where user is coming from - 'game' or 'score'
+    difficultyLevel: 'beginner', // Added property for adaptive difficulty
+    hintsUsed: 0 // Track hint usage
 };
 
 // DOM elements
@@ -47,7 +50,7 @@ const learningModeToggle = document.getElementById('learning-mode');
 const leaderboardBtn = document.getElementById('leaderboard-btn');
 const playAgainBtn = document.getElementById('play-again-btn');
 const playAgainFromScoreBtn = document.getElementById('play-again-from-score-btn');
-const backToScoreBtn = document.getElementById('back-to-score-btn');
+const backButton = document.getElementById('back-button');
 
 // Sound effects
 let soundEnabled = true;
@@ -96,6 +99,10 @@ function initGame() {
     gameState.correctAnswers = 0;
     gameState.wrongAnswers = 0;
     gameState.startTime = Date.now();
+    gameState.hintsUsed = 0;
+    
+    // Load difficulty setting from localStorage
+    gameState.difficultyLevel = localStorage.getItem('difficultyLevel') || 'beginner';
     
     // Create keyboard with vowels highlighted
     createKeyboard();
@@ -107,7 +114,11 @@ function initGame() {
         // Start the game after closing instructions
         loadNextAnimal();
     });
-    leaderboardBtn.addEventListener('click', showLeaderboard);
+    
+    leaderboardBtn.addEventListener('click', () => {
+        gameState.leaderboardOrigin = 'game';
+        showLeaderboard();
+    });
     
     if (playAgainBtn) {
         playAgainBtn.addEventListener('click', restartGame);
@@ -117,8 +128,8 @@ function initGame() {
         playAgainFromScoreBtn.addEventListener('click', restartGame);
     }
     
-    if (backToScoreBtn) {
-        backToScoreBtn.addEventListener('click', backToScore);
+    if (backButton) {
+        backButton.addEventListener('click', handleBackButton);
     }
     
     // Set up learning mode toggle
@@ -126,14 +137,29 @@ function initGame() {
         learningModeToggle.addEventListener('change', function() {
             if (this.checked) {
                 showHint();
+                gameState.hintsUsed++;
             } else {
                 hideHint();
             }
         });
+        
+        // Check if auto-hints is enabled
+        const preferences = JSON.parse(localStorage.getItem('accessibilityPreferences') || '{}');
+        if (preferences.autoHints) {
+            learningModeToggle.checked = true;
+        }
     }
     
     // Set up share button
     setupAnimalShareButton();
+    
+    // Initialize toast container if it doesn't exist
+    if (!document.getElementById('toast-message')) {
+        const toast = document.createElement('div');
+        toast.id = 'toast-message';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
     
     // Always start with instructions first
     showInstructions();
@@ -150,11 +176,20 @@ function loadNextAnimal() {
     }
     
     gameState.currentAnimal = gameState.shuffledAnimals[gameState.currentIndex];
-    gameState.guessesRemaining = 3;
+    
+    // Adjust guesses based on difficulty
+    if (gameState.difficultyLevel === 'beginner') {
+        gameState.guessesRemaining = 3;
+    } else if (gameState.difficultyLevel === 'intermediate') {
+        gameState.guessesRemaining = 2;
+    } else {
+        gameState.guessesRemaining = 1;
+    }
     
     // Update the UI
     animalImage.src = `assets/images/${gameState.currentAnimal.image}`;
     animalImage.alt = `Image of an animal starting with the letter ${gameState.currentAnimal.name.charAt(0)}`;
+    animalImage.classList.remove('celebration');
     
     // Hide any previous feedback
     feedbackText.classList.add('hidden');
@@ -169,8 +204,9 @@ function loadNextAnimal() {
     const oldHint = document.querySelector('.learning-hint');
     if (oldHint) oldHint.remove();
     
-    // Show hint if in learning mode
-    if (learningModeToggle && learningModeToggle.checked) {
+    // Show hint if learning mode is checked or auto-hints is enabled
+    const preferences = JSON.parse(localStorage.getItem('accessibilityPreferences') || '{}');
+    if ((learningModeToggle && learningModeToggle.checked) || preferences.autoHints) {
         showHint();
     }
     
@@ -244,20 +280,28 @@ function handleCorrectAnswer() {
         playSound('correct');
     }
     
+    // Add celebration animation to animal image
+    animalImage.classList.add('celebration');
+    
     // Show the word
     displayWord();
+    
+    // Show success feedback
+    feedbackText.textContent = 'Great job!';
+    feedbackText.classList.remove('hidden');
+    feedbackText.style.color = 'var(--success-color)';
     
     // Disable keyboard temporarily
     disableKeyboard();
     
     // Announce to screen readers
-    announceToScreenReader(`Correct! ${gameState.currentAnimal.name} starts with ${gameState.currentAnimal.name.charAt(0)}`);
+    announceToScreenReader(`Excellent! ${gameState.currentAnimal.name} starts with the letter ${gameState.currentAnimal.name.charAt(0)}. ${getAnimalFunFact(gameState.currentAnimal.name).replace('Hint: ', '')}`);
     
     // Move to next animal after delay
     setTimeout(() => {
         gameState.currentIndex++;
         loadNextAnimal();
-    }, 1500);
+    }, 2000);
 }
 
 // Handle wrong answer
@@ -308,30 +352,6 @@ function displayWord() {
     // Create the display with appropriate styling - first letter underlined and green
     wordDisplay.innerHTML = `<span class="first-letter">${firstLetter}</span>${restOfWord}`;
     
-    // Move the word display to be after the animal container if it's not already
-    const animalContainer = document.querySelector('.animal-container');
-    if (animalContainer && wordDisplay) {
-        // Remove word display from its current position
-        if (wordDisplay.parentNode) {
-            wordDisplay.parentNode.removeChild(wordDisplay);
-        }
-        
-        // Insert directly after animal container
-        animalContainer.insertAdjacentElement('afterend', wordDisplay);
-        
-        // If there's a hint, move it after the word display
-        const hint = document.querySelector('.learning-hint');
-        if (hint) {
-            // Remove hint from its current position
-            if (hint.parentNode) {
-                hint.parentNode.removeChild(hint);
-            }
-            
-            // Insert after word display
-            wordDisplay.insertAdjacentElement('afterend', hint);
-        }
-    }
-    
     // Update key styling to show the correct letter
     const correctKey = document.querySelector(`.key[data-key="${firstLetter.toUpperCase()}"]`);
     if (correctKey) {
@@ -370,15 +390,17 @@ function showHint() {
     hintElement.className = 'learning-hint';
     hintElement.textContent = hint;
     
-    // Add after animal container or word display if it exists
-    const wordElement = document.querySelector('.word-display');
-    if (wordElement && wordElement.textContent.trim() !== '') {
-        wordElement.insertAdjacentElement('afterend', hintElement);
-    } else {
-        const animalContainer = document.querySelector('.animal-container');
-        if (animalContainer) {
-            animalContainer.insertAdjacentElement('afterend', hintElement);
-        }
+    // Get the width of the progress indicator
+    const progressIndicator = document.getElementById('progress-indicator');
+    if (progressIndicator) {
+        const width = Math.max(progressIndicator.offsetWidth, 220);
+        hintElement.style.minWidth = width + 'px';
+    }
+    
+    // Add after learning mode toggle container
+    const toggleContainer = document.querySelector('.learning-toggle-container');
+    if (toggleContainer) {
+        toggleContainer.insertAdjacentElement('afterend', hintElement);
     }
     
     // Announce to screen readers
@@ -419,6 +441,31 @@ function endGame() {
     
     // Announce to screen readers
     announceToScreenReader(`Game over! You had ${gameState.correctAnswers} correct and ${gameState.wrongAnswers} wrong.`);
+    
+    // Auto-adjust difficulty for next game
+    if (gameState.correctAnswers >= 9) {
+        // Increase difficulty if doing very well
+        if (gameState.difficultyLevel === 'beginner') {
+            gameState.difficultyLevel = 'intermediate';
+            localStorage.setItem('difficultyLevel', 'intermediate');
+            showToast('Great job! Difficulty increased to Intermediate');
+        } else if (gameState.difficultyLevel === 'intermediate') {
+            gameState.difficultyLevel = 'advanced';
+            localStorage.setItem('difficultyLevel', 'advanced');
+            showToast('Impressive! Difficulty increased to Advanced');
+        }
+    } else if (gameState.correctAnswers <= 3) {
+        // Decrease difficulty if struggling
+        if (gameState.difficultyLevel === 'advanced') {
+            gameState.difficultyLevel = 'intermediate';
+            localStorage.setItem('difficultyLevel', 'intermediate');
+            showToast('Difficulty adjusted to Intermediate');
+        } else if (gameState.difficultyLevel === 'intermediate') {
+            gameState.difficultyLevel = 'beginner';
+            localStorage.setItem('difficultyLevel', 'beginner');
+            showToast('Difficulty adjusted to Beginner');
+        }
+    }
 }
 
 // Show instructions modal
@@ -430,6 +477,15 @@ function showInstructions() {
     if (gameScreen) {
         gameScreen.classList.remove('active');
     }
+    
+    // Close when clicking outside the modal content
+    instructionsModal.addEventListener('click', function(event) {
+        if (event.target === instructionsModal) {
+            hideInstructions();
+            // Start the game after closing instructions
+            loadNextAnimal();
+        }
+    });
 }
 
 // Hide instructions modal
@@ -476,8 +532,14 @@ function showScoreScreen(correct, wrong, timeElapsed) {
             // Save score to leaderboard
             saveScore(timeElapsed);
             
+            // Set origin before showing leaderboard
+            gameState.leaderboardOrigin = 'score';
+            
             // Show leaderboard
             showLeaderboard();
+            
+            // Show confirmation
+            showToast('Score saved!');
         });
     }
     
@@ -491,30 +553,51 @@ function setupSharingButtons(correct, wrong) {
     const facebookBtn = document.getElementById('share-facebook-btn');
     const copyBtn = document.getElementById('copy-result-btn');
     
+    if (!twitterBtn || !facebookBtn || !copyBtn) return;
+    
+    const shareText = `I scored ${correct} correct and ${wrong} wrong in First Letter Friends! Can you beat my score?`;
     const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
     
-    if (twitterBtn) {
-        twitterBtn.addEventListener('click', () => {
-            const text = `I scored ${correct} correct and ${wrong} wrong in First Letter Friends! Can you beat my score? #FirstLetterFriends`;
-            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
-        });
-    }
+    twitterBtn.className = 'share-btn twitter-btn';
+    facebookBtn.className = 'share-btn facebook-btn';
+    copyBtn.className = 'share-btn copy-btn';
     
-    if (facebookBtn) {
-        facebookBtn.addEventListener('click', () => {
-            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
-        });
-    }
+    twitterBtn.innerHTML = `<span class="icon">🐦</span> Twitter`;
+    facebookBtn.innerHTML = `<span class="icon">📘</span> Facebook`;
+    copyBtn.innerHTML = `<span class="icon">📋</span> Copy`;
     
-    if (copyBtn) {
-        copyBtn.addEventListener('click', () => {
-            const text = `I scored ${correct} correct and ${wrong} wrong in First Letter Friends! Try it yourself: ${shareUrl}`;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Result copied to clipboard!');
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-            });
+    twitterBtn.onclick = function() {
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+        showToast('Opened Twitter sharing');
+    };
+    
+    facebookBtn.onclick = function() {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+        showToast('Opened Facebook sharing');
+    };
+    
+    copyBtn.onclick = function() {
+        const text = `${shareText} Try it yourself: ${shareUrl}`;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Result copied to clipboard!');
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+            showToast('Unable to copy text');
         });
+    };
+}
+
+// Handle back button click based on origin
+function handleBackButton() {
+    // Hide leaderboard screen
+    document.getElementById('leaderboard-screen').classList.remove('active');
+    
+    if (gameState.leaderboardOrigin === 'score') {
+        // Show score screen if coming from score
+        document.getElementById('score-screen').classList.add('active');
+    } else {
+        // Show game screen if coming from game
+        document.getElementById('game-screen').classList.add('active');
     }
 }
 
@@ -560,6 +643,13 @@ const achievements = [
             const gameCount = parseInt(localStorage.getItem('gameCount') || '0');
             return gameCount >= 3;
         }
+    },
+    {
+        id: 'independent',
+        name: 'Independent',
+        icon: '🦸',
+        description: 'Complete game with no hints',
+        condition: (state) => state.correctAnswers >= 8 && state.hintsUsed === 0
     }
 ];
 
@@ -576,6 +666,12 @@ function checkAchievements() {
         if (!unlockedAchievements.includes(achievement.id) && achievement.condition(gameState)) {
             unlockedAchievements.push(achievement.id);
             newlyUnlocked.push(achievement.id);
+            
+            // Announce new achievement
+            announceToScreenReader(`New achievement unlocked: ${achievement.name}. ${achievement.description}`);
+            
+            // Show toast notification
+            showToast(`Achievement Unlocked: ${achievement.name}!`);
         }
     });
     
@@ -639,17 +735,14 @@ function showLeaderboard() {
     // Show leaderboard screen
     document.getElementById('leaderboard-screen').classList.add('active');
     
+    // Update back button text based on origin
+    const backBtn = document.getElementById('back-button');
+    if (backBtn) {
+        backBtn.textContent = gameState.leaderboardOrigin === 'score' ? 'Back to Score' : 'Back to Game';
+    }
+    
     // Display leaderboard
     displayLeaderboard();
-}
-
-// Go back to score screen from leaderboard
-function backToScore() {
-    // Hide leaderboard screen
-    document.getElementById('leaderboard-screen').classList.remove('active');
-    
-    // Show score screen
-    document.getElementById('score-screen').classList.add('active');
 }
 
 // Restart game
@@ -664,29 +757,9 @@ function restartGame() {
     
     // Initialize game
     initGame();
-}
-
-// Share animal fun fact
-function shareAnimalFact() {
-    if (!gameState.currentAnimal) return;
     
-    const animalName = gameState.currentAnimal.name;
-    const funFact = getAnimalFunFact(animalName).replace('Hint: ', ''); // Remove the "Hint: " prefix
-    const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
-    
-    const shareText = `I learned about the ${animalName.toLowerCase()} in First Letter Friends! ${funFact} Try it yourself: ${shareUrl}`;
-    
-    // Show sharing options
-    showSharingDialog(shareText);
-}
-
-// Share achievement
-function shareAchievement(achievement) {
-    const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
-    const shareText = `I just earned the "${achievement.name}" achievement in First Letter Friends! ${achievement.description}. Try it yourself: ${shareUrl}`;
-    
-    // Show sharing options
-    showSharingDialog(shareText);
+    // Show toast with difficulty level
+    showToast(`Playing on ${gameState.difficultyLevel.charAt(0).toUpperCase() + gameState.difficultyLevel.slice(1)} difficulty`);
 }
 
 // Generic sharing dialog
@@ -700,14 +773,14 @@ function showSharingDialog(text) {
         
         sharingModal.innerHTML = `
             <div class="modal-content sharing-content">
-                <h3>Share</h3>
+                <h2>Share</h2>
                 <p id="share-text"></p>
                 <div class="share-buttons">
-                    <button id="modal-twitter-btn" class="share-btn"><span class="icon">🐦</span> Twitter</button>
-                    <button id="modal-facebook-btn" class="share-btn"><span class="icon">📘</span> Facebook</button>
-                    <button id="modal-copy-btn" class="share-btn"><span class="icon">📋</span> Copy</button>
+                    <button id="modal-twitter-btn" class="share-btn twitter-btn"><span class="icon">🐦</span> Twitter</button>
+                    <button id="modal-facebook-btn" class="share-btn facebook-btn"><span class="icon">📘</span> Facebook</button>
+                    <button id="modal-copy-btn" class="share-btn copy-btn"><span class="icon">📋</span> Copy</button>
                 </div>
-                <button id="close-sharing" class="secondary-btn">Close</button>
+                <button id="close-sharing" class="primary-btn">Close</button>
             </div>
         `;
         
@@ -718,32 +791,65 @@ function showSharingDialog(text) {
     document.getElementById('share-text').textContent = text;
     
     // Set up sharing buttons
-    document.getElementById('modal-twitter-btn').addEventListener('click', () => {
+    document.getElementById('modal-twitter-btn').onclick = function() {
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+        showToast('Opened Twitter sharing');
         sharingModal.style.display = 'none';
-    });
+    };
     
-    document.getElementById('modal-facebook-btn').addEventListener('click', () => {
+    document.getElementById('modal-facebook-btn').onclick = function() {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=https://jerlyn.github.io/first-letter-friends/`, '_blank');
+        showToast('Opened Facebook sharing');
         sharingModal.style.display = 'none';
-    });
+    };
     
-    document.getElementById('modal-copy-btn').addEventListener('click', () => {
+    document.getElementById('modal-copy-btn').onclick = function() {
         navigator.clipboard.writeText(text).then(() => {
-            alert('Copied to clipboard!');
+            showToast('Copied to clipboard!');
             sharingModal.style.display = 'none';
         }).catch(err => {
             console.error('Could not copy text: ', err);
+            showToast('Unable to copy text');
         });
-    });
+    };
     
     // Add close button handler
-    document.getElementById('close-sharing').addEventListener('click', () => {
+    document.getElementById('close-sharing').onclick = function() {
         sharingModal.style.display = 'none';
-    });
+    };
     
     // Display the modal
     sharingModal.style.display = 'flex';
+    
+    // Close when clicking outside the modal content
+    sharingModal.addEventListener('click', function(event) {
+        if (event.target === sharingModal) {
+            sharingModal.style.display = 'none';
+        }
+    });
+}
+
+// Share animal fun fact
+function shareAnimalFact() {
+    if (!gameState.currentAnimal) return;
+    
+    const animalName = gameState.currentAnimal.name;
+    const funFact = getAnimalFunFact(animalName).replace('Hint: ', ''); // Remove the "Hint: " prefix
+    const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
+    
+    const shareText = `I learned about the ${animalName.toLowerCase()} in First Letter Friends! ${funFact} Try it yourself:`;
+    
+    // Show sharing options
+    showSharingDialog(shareText);
+}
+
+// Share achievement
+function shareAchievement(achievement) {
+    const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
+    const shareText = `I just earned the "${achievement.name}" achievement in First Letter Friends! ${achievement.description}. Try it yourself:`;
+    
+    // Show sharing options
+    showSharingDialog(shareText);
 }
 
 // Set up event listeners for the animal share button
@@ -765,15 +871,34 @@ function startConfetti() {
                     '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', 
                     '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'];
                     
+    // Check for reduced motion preference
+    const preferences = JSON.parse(localStorage.getItem('accessibilityPreferences') || '{}');
+    const reducedMotion = preferences.reducedMotion || false;
+    
+    // Create fewer confetti pieces if reduced motion is enabled
+    const confettiCount = reducedMotion ? 50 : 150;
+    
     // Create confetti pieces
-    for (let i = 0; i < 150; i++) {
+    for (let i = 0; i < confettiCount; i++) {
         const confetti = document.createElement('div');
         confetti.className = 'confetti';
         confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
         confetti.style.left = Math.random() * 100 + 'vw';
-        confetti.style.animationDelay = Math.random() * 5 + 's';
-        confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+        
+        if (!reducedMotion) {
+            confetti.style.animationDelay = Math.random() * 5 + 's';
+            confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+        } else {
+            confetti.style.animationDelay = Math.random() * 1 + 's';
+            confetti.style.animationDuration = Math.random() * 1 + 1 + 's';
+        }
+        
         confettiContainer.appendChild(confetti);
+    }
+    
+    // Play celebration sound
+    if (soundEnabled) {
+        playSound('success');
     }
     
     // Remove confetti after animation ends
@@ -781,7 +906,7 @@ function startConfetti() {
         if (confettiContainer && confettiContainer.parentNode) {
             confettiContainer.parentNode.removeChild(confettiContainer);
         }
-    }, 8000);
+    }, reducedMotion ? 3000 : 8000);
 }
 
 // Add screen reader announcements
@@ -805,6 +930,27 @@ function announceToScreenReader(message) {
     setTimeout(() => {
         announcer.textContent = '';
     }, 3000);
+}
+
+// Show toast message
+function showToast(message, duration = 3000) {
+    // Create toast element if it doesn't exist
+    let toast = document.getElementById('toast-message');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast-message';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    
+    // Set message and show
+    toast.textContent = message;
+    toast.classList.add('show');
+    
+    // Hide after duration
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, duration);
 }
 
 // Initialize the game when the page loads

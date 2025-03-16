@@ -16,6 +16,16 @@ function setupAccessibility() {
     
     // Set up keyboard navigation
     setupKeyboardNavigation();
+    
+    // Add screen reader announcer if not present
+    if (!document.getElementById('screen-reader-announcer')) {
+        const announcer = document.createElement('div');
+        announcer.id = 'screen-reader-announcer';
+        announcer.setAttribute('aria-live', 'polite');
+        announcer.setAttribute('aria-atomic', 'true');
+        announcer.classList.add('sr-only');
+        document.body.appendChild(announcer);
+    }
 }
 
 // Show accessibility options modal
@@ -56,6 +66,11 @@ function showAccessibilityOptions() {
                     <input type="checkbox" id="reduced-motion">
                 </div>
                 
+                <div class="option-group">
+                    <label for="auto-hints">Always Show Hints:</label>
+                    <input type="checkbox" id="auto-hints">
+                </div>
+                
                 <button id="save-accessibility" class="primary-btn">Save Preferences</button>
                 <button id="close-accessibility" class="secondary-btn">Cancel</button>
             </div>
@@ -74,6 +89,13 @@ function showAccessibilityOptions() {
     }
     
     modal.style.display = 'flex';
+    
+    // Close when clicking outside the modal content
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
 }
 
 // Load accessibility preferences from localStorage
@@ -108,6 +130,13 @@ function loadAccessibilityPreferences() {
             reducedMotionCheckbox.checked = preferences.reducedMotion;
         }
     }
+    
+    if (preferences.autoHints !== undefined) {
+        const autoHintsCheckbox = document.getElementById('auto-hints');
+        if (autoHintsCheckbox) {
+            autoHintsCheckbox.checked = preferences.autoHints;
+        }
+    }
 }
 
 // Save accessibility preferences to localStorage
@@ -116,12 +145,14 @@ function saveAccessibilityPreferences() {
     const highContrastCheckbox = document.getElementById('high-contrast');
     const soundEffectsCheckbox = document.getElementById('sound-effects');
     const reducedMotionCheckbox = document.getElementById('reduced-motion');
+    const autoHintsCheckbox = document.getElementById('auto-hints');
     
     const preferences = {
         fontSize: fontSizeSelect ? fontSizeSelect.value : 'normal',
         highContrast: highContrastCheckbox ? highContrastCheckbox.checked : false,
         soundEffects: soundEffectsCheckbox ? soundEffectsCheckbox.checked : true,
-        reducedMotion: reducedMotionCheckbox ? reducedMotionCheckbox.checked : false
+        reducedMotion: reducedMotionCheckbox ? reducedMotionCheckbox.checked : false,
+        autoHints: autoHintsCheckbox ? autoHintsCheckbox.checked : false
     };
     
     // Save to local storage
@@ -135,6 +166,9 @@ function saveAccessibilityPreferences() {
     if (modal) {
         modal.style.display = 'none';
     }
+    
+    // Show confirmation
+    showToast('Accessibility preferences saved');
 }
 
 // Apply accessibility preferences to the game
@@ -173,6 +207,16 @@ function applyAccessibilityPreferences() {
     } else {
         document.documentElement.classList.remove('reduced-motion');
     }
+    
+    // Apply auto hints
+    if (preferences.autoHints && window.learningModeToggle) {
+        window.learningModeToggle.checked = true;
+        
+        // If the showHint function exists, call it
+        if (typeof showHint === 'function') {
+            showHint();
+        }
+    }
 }
 
 // Setup keyboard navigation for better accessibility
@@ -189,11 +233,35 @@ function setupKeyboardNavigation() {
         element.addEventListener('blur', () => {
             element.classList.remove('keyboard-focus');
         });
+        
+        // Add hover class on focus for consistent styling
+        element.addEventListener('focus', () => {
+            if (element.classList.contains('key') || 
+                element.classList.contains('share-btn') || 
+                element.classList.contains('achievement-badge')) {
+                element.classList.add('hover');
+            }
+        });
+        
+        element.addEventListener('blur', () => {
+            element.classList.remove('hover');
+        });
     });
     
     // Enable keyboard activation of letters
     document.addEventListener('keydown', (event) => {
         const key = event.key.toUpperCase();
+        
+        // Handle Escape key for modals
+        if (event.key === 'Escape') {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (modal.style.display === 'flex') {
+                    modal.style.display = 'none';
+                }
+            });
+            return;
+        }
         
         // Check if it's a letter key
         if (/^[A-Z]$/.test(key)) {
@@ -205,4 +273,50 @@ function setupKeyboardNavigation() {
             }
         }
     });
+}
+
+// Add screen reader announcements
+function announceToScreenReader(message) {
+    // Get the live region
+    let announcer = document.getElementById('screen-reader-announcer');
+    
+    if (!announcer) {
+        announcer = document.createElement('div');
+        announcer.id = 'screen-reader-announcer';
+        announcer.setAttribute('aria-live', 'polite');
+        announcer.setAttribute('aria-atomic', 'true');
+        announcer.classList.add('sr-only'); // Visually hidden
+        document.body.appendChild(announcer);
+    }
+    
+    // Set the message
+    announcer.textContent = message;
+    
+    // Clear after a short delay
+    setTimeout(() => {
+        announcer.textContent = '';
+    }, 3000);
+}
+
+// Show toast message (if not defined elsewhere)
+if (typeof showToast !== 'function') {
+    function showToast(message, duration = 3000) {
+        // Create toast element if it doesn't exist
+        let toast = document.getElementById('toast-message');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast-message';
+            toast.className = 'toast';
+            document.body.appendChild(toast);
+        }
+        
+        // Set message and show
+        toast.textContent = message;
+        toast.classList.add('show');
+        
+        // Hide after duration
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    }
 }

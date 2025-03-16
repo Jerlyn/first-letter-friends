@@ -22,13 +22,6 @@
         <h1>First Letter Friends</h1>
         
         <div class="game-area">
-            <div class="learning-mode-toggle">
-                <label for="learning-mode">
-                    <input type="checkbox" id="learning-mode">
-                    Learning Mode
-                </label>
-            </div>
-            
             <div id="progress-indicator" class="progress-indicator">Animal 1 of 10</div>
             
             <p id="game-question" class="question">Which letter does this animal start with?</p>
@@ -37,6 +30,13 @@
                 <img id="animal-image" src="assets/images/cat.png" alt="Animal to guess" class="animal-image">
                 <button class="animal-share-btn" aria-label="Share this animal fact"><span class="icon">📤</span></button>
                 <p id="feedback-text" class="hidden"></p>
+            </div>
+            
+            <div class="learning-toggle-container">
+                <label for="learning-mode" class="learning-mode-toggle">
+                    <input type="checkbox" id="learning-mode">
+                    Learning Mode
+                </label>
             </div>
             
             <p id="word-display" class="word-display"></p>
@@ -103,7 +103,7 @@
         </table>
         
         <div class="button-container">
-            <button id="back-to-score-btn" class="back-btn">Back to Score</button>
+            <button id="back-button" class="back-btn">Back</button>
             <button id="play-again-btn" class="primary-btn">Play Again</button>
         </div>
     </div>
