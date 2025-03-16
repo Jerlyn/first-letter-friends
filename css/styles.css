@@ -1283,12 +1283,11 @@ footer {
     }
 }
 /* Feedback message styling */
-
 .feedback-message {
     position: absolute;
-    top: 0;
+    top: 50%;
     left: 50%;
-    transform: translate(-50%, -120%); /* Position it above the animal container */
+    transform: translate(-50%, -50%); /* Center on the animal */
     font-size: calc(1.6rem * var(--font-scale));
     font-family: var(--font-family-secondary);
     font-weight: bold;
@@ -1304,19 +1303,19 @@ footer {
 
 .feedback-message.success {
     color: var(--success-color);
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.85);
 }
 
 .feedback-message.error {
     color: var(--error-color);
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.85);
 }
 
 @keyframes fadeInOut {
-    0% { opacity: 0; transform: translate(-50%, -110%); }
-    15% { opacity: 1; transform: translate(-50%, -120%); }
-    75% { opacity: 1; transform: translate(-50%, -120%); }
-    100% { opacity: 0; transform: translate(-50%, -130%); }
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
 }
 
 /* Hide the old feedback text */
