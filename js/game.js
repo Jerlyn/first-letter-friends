@@ -165,8 +165,46 @@ function initGame() {
     showInstructions();
 }
 
+// Function to show temporary feedback message
+function showFeedbackMessage(message, isSuccess = true) {
+    // Remove any existing feedback messages
+    removeFeedbackMessages();
+    
+    // Create the feedback message element
+    const feedback = document.createElement('div');
+    feedback.className = `feedback-message ${isSuccess ? 'success' : 'error'}`;
+    feedback.textContent = message;
+    feedback.setAttribute('role', 'alert');
+    
+    // Add it to the animal container instead of game area
+    const animalContainer = document.querySelector('.animal-container');
+    if (animalContainer) {
+        animalContainer.appendChild(feedback);
+    }
+    
+    // Remove the message after animation completes
+    setTimeout(() => {
+        if (feedback && feedback.parentNode) {
+            feedback.parentNode.removeChild(feedback);
+        }
+    }, 2500); // Match the animation duration
+}
+
+// Function to remove all feedback messages
+function removeFeedbackMessages() {
+    const messages = document.querySelectorAll('.feedback-message');
+    messages.forEach(msg => {
+        if (msg.parentNode) {
+            msg.parentNode.removeChild(msg);
+        }
+    });
+}
+
 // Load the next animal
 function loadNextAnimal() {
+    // Remove any existing feedback messages
+    removeFeedbackMessages();
+    
     // End game after 10 animals or if we've gone through all shuffled animals
     if (gameState.currentIndex >= 10 || gameState.currentIndex >= gameState.shuffledAnimals.length) {
         // Start confetti for game completion
@@ -190,6 +228,32 @@ function loadNextAnimal() {
     animalImage.src = `assets/images/${gameState.currentAnimal.image}`;
     animalImage.alt = `Image of an animal starting with the letter ${gameState.currentAnimal.name.charAt(0)}`;
     animalImage.classList.remove('celebration');
+    
+    // Create image container if it doesn't exist
+    let imageContainer = animalImage.closest('.image-container');
+    if (!imageContainer) {
+        // Save original parent
+        const animalContainer = animalImage.parentElement;
+        
+        // Create image container
+        imageContainer = document.createElement('div');
+        imageContainer.className = 'image-container';
+        
+        // Move the image to the container
+        animalImage.remove();
+        imageContainer.appendChild(animalImage);
+        
+        // Add container to animal container
+        animalContainer.appendChild(imageContainer);
+        
+        // Make sure the share button is outside the image container
+        // but still inside the animal container
+        const shareBtn = animalContainer.querySelector('.animal-share-btn');
+        if (shareBtn) {
+            shareBtn.remove();
+            animalContainer.appendChild(shareBtn);
+        }
+    }
     
     // Hide any previous feedback
     feedbackText.classList.add('hidden');
@@ -287,15 +351,13 @@ function handleCorrectAnswer() {
     displayWord();
     
     // Show success feedback
-    feedbackText.textContent = 'Great job!';
-    feedbackText.classList.remove('hidden');
-    feedbackText.style.color = 'var(--success-color)';
+    showFeedbackMessage('Great job!', true);
     
     // Disable keyboard temporarily
     disableKeyboard();
     
     // Announce to screen readers
-    announceToScreenReader(`Excellent! ${gameState.currentAnimal.name} starts with the letter ${gameState.currentAnimal.name.charAt(0)}. ${getAnimalFunFact(gameState.currentAnimal.name).replace('Hint: ', '')}`);
+    announceToScreenReader(`Correct! ${gameState.currentAnimal.name} starts with ${gameState.currentAnimal.name.charAt(0)}`);
     
     // Move to next animal after delay
     setTimeout(() => {
@@ -315,9 +377,7 @@ function handleWrongAnswer(letter) {
     }
     
     // Show feedback
-    feedbackText.textContent = 'Try again';
-    feedbackText.classList.remove('hidden');
-    feedbackText.style.color = 'var(--error-color)';
+    showFeedbackMessage('Try again', false);
     
     // Mark the key as wrong
     const wrongKey = document.querySelector(`.key[data-key="${letter}"]`);

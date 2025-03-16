@@ -169,9 +169,17 @@ p {
     align-items: center;
     margin-bottom: 0.5rem;
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* Changed from hidden to allow share button to be visible */
     box-shadow: var(--shadow-md);
     border: 3px solid var(--primary-color);
+}
+
+.image-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
 }
 
 .animal-image {
@@ -193,6 +201,35 @@ p {
 @keyframes celebration {
     0%, 100% { transform: translate(-50%, -50%) scale(1); }
     50% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+/* ===== ANIMAL SHARE BUTTON ===== */
+.animal-share-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0;
+    box-shadow: var(--shadow-md);
+    transition: all 0.2s ease;
+    z-index: 10; /* Ensure it's above the animal container */
+    opacity: 0.9;
+}
+
+.animal-share-btn:hover {
+    background-color: rgba(255, 255, 255, 1);
+    transform: scale(1.15);
+    opacity: 1;
+    box-shadow: var(--shadow-lg);
 }
 
 /* ===== LEARNING MODE TOGGLE ===== */
@@ -280,7 +317,7 @@ p {
     width: 100%;
     max-width: 500px;
     margin: 0.25rem auto;
-    padding: 0 5px;
+    padding: 0;
     order: 3; /* Ensure it appears after word display */
 }
 
@@ -289,12 +326,13 @@ p {
     justify-content: center;
     margin-bottom: 6px;
     width: 100%;
-    gap: 8px;
+    gap: 4px; /* Reduced gap for better mobile fit */
 }
 
 .key {
     height: 48px;
-    min-width: 40px;
+    min-width: 9%; /* Use percentage-based width for better scaling */
+    max-width: 40px;
     flex: 1;
     margin: 0;
     padding: 0;
@@ -462,32 +500,6 @@ p {
     gap: var(--spacing-md);
     flex-wrap: wrap;
     margin: var(--spacing-md) 0;
-}
-
-/* ===== ANIMAL SHARE BUTTON ===== */
-.animal-share-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    font-size: 1rem;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.2s ease;
-    z-index: 5;
-}
-
-.animal-share-btn:hover {
-    background-color: rgba(255, 255, 255, 1);
-    transform: scale(1.1);
-    box-shadow: var(--shadow-md);
 }
 
 /* ===== FOOTER ===== */
@@ -662,10 +674,10 @@ footer {
 /* Achievement share button */
 .achievement-share-btn {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border: none;
+    top: -5px;
+    right: -5px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--secondary-color);
     border-radius: 50%;
     width: 30px;
     height: 30px;
@@ -677,8 +689,7 @@ footer {
     padding: 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     z-index: 4;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    opacity: 0.9;
 }
 
 .achievement-badge:hover .achievement-share-btn {
@@ -955,35 +966,150 @@ footer {
 }
 
 /* ===== MEDIA QUERIES ===== */
-/* Mobile Small */
-@media (max-width: 380px) {
+/* Mobile Extra Small */
+@media (max-width: 320px) {
     .keyboard {
+        width: 100%;
+        max-width: 100%;
         padding: 0;
     }
     
+    .keyboard-row {
+        gap: 2px;
+    }
+    
     .key {
-        height: 44px;
+        height: 38px;
+        min-width: 26px;
+        max-width: 28px;
+        font-size: 0.8rem;
+        padding: 0;
+    }
+    
+    .animal-container {
+        width: 160px;
+        height: 160px;
+    }
+    
+    .animal-share-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+        top: -6px;
+        right: -6px;
+    }
+    
+    h1 {
+        font-size: calc(1.8rem * var(--font-scale));
+    }
+    
+    .word-display {
+        font-size: calc(1.4rem * var(--font-scale));
+    }
+    
+    /* Make all content more compact */
+    .game-area {
+        padding: 0.5rem 0.5rem 0.25rem;
+    }
+    
+    .learning-hint {
+        padding: 0.5rem;
+        margin: 0.25rem auto 0.4rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Reduce the size of the share buttons */
+    .share-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Mobile Small */
+@media (min-width: 321px) and (max-width: 375px) {
+    .keyboard {
+        padding: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .keyboard-row {
+        gap: 3px;
+    }
+    
+    .key {
+        height: 40px;
+        min-width: 30px;
+        max-width: 32px;
+        font-size: 0.85rem;
+        padding: 0;
+    }
+    
+    .animal-container {
+        width: 170px;
+        height: 170px;
+    }
+    
+    .animal-share-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 0.85rem;
+    }
+    
+    h1 {
+        font-size: calc(1.9rem * var(--font-scale));
+    }
+    
+    .word-display {
+        font-size: calc(1.5rem * var(--font-scale));
+    }
+    
+    .game-area {
+        padding: 0.75rem 0.75rem 0.35rem;
+    }
+}
+
+/* Mobile Medium */
+@media (min-width: 376px) and (max-width: 390px) {
+    .keyboard {
+        padding: 0;
+        width: 100%;
+    }
+    
+    .keyboard-row {
+        gap: 3px;
+    }
+    
+    .key {
+        height: 42px;
         min-width: 32px;
-        margin: 0;
+        max-width: 35px;
         font-size: 0.9rem;
+        padding: 0;
     }
     
     .animal-container {
         width: 180px;
         height: 180px;
     }
-    
-    h1 {
-        font-size: calc(2rem * var(--font-scale));
+}
+
+/* Mobile Large */
+@media (min-width: 391px) and (max-width: 420px) {
+    .keyboard {
+        padding: 0;
+        width: 100%;
     }
     
-    .word-display {
-        font-size: calc(1.6rem * var(--font-scale));
+    .keyboard-row {
+        gap: 4px;
     }
     
-    .achievement-container {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-md);
+    .key {
+        height: 44px;
+        min-width: 34px;
+        max-width: 38px;
+        font-size: 0.95rem;
     }
 }
 
@@ -999,6 +1125,19 @@ footer {
     .share-btn {
         width: auto;
         min-width: 140px;
+    }
+    
+    .keyboard {
+        padding: 0 5px;
+    }
+    
+    .keyboard-row {
+        gap: 6px;
+    }
+    
+    .key {
+        min-width: 38px;
+        max-width: 42px;
     }
 }
 
@@ -1047,10 +1186,63 @@ footer {
         order: 7;
         width: 60%;
         max-width: 600px;
+        padding: 0 1rem;
+    }
+    
+    .keyboard-row {
+        gap: 8px;
+    }
+    
+    .key {
+        min-width: 40px;
+        max-width: 48px;
+        height: 48px;
     }
     
     footer {
         order: 9;
+    }
+}
+
+/* Portrait orientation specific adjustments for all mobile devices */
+@media (orientation: portrait) and (max-width: 428px) {
+    .screen {
+        padding: 1rem 0.75rem;
+    }
+    
+    .keyboard {
+        width: 100%;
+        max-width: 100%;
+        margin: 0.2rem auto;
+    }
+    
+    /* Ensure keys stay within the screen */
+    .key {
+        min-width: 0;
+        flex: 1;
+        font-size: 0.9rem;
+        padding: 0;
+    }
+    
+    /* Reduce whitespace */
+    .game-area {
+        padding-bottom: 0;
+    }
+    
+    /* Make footer more compact */
+    footer {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+    
+    .icon-btn {
+        padding: 0.5rem;
+        margin: 0 0.3rem;
+    }
+    
+    .copyright {
+        margin-top: 0.8rem;
+        font-size: 0.8rem;
     }
 }
 
@@ -1089,4 +1281,45 @@ footer {
     @keyframes celebration {
         0%, 100% { transform: translate(-50%, -50%) scale(1); }
     }
+}
+/* Feedback message styling */
+
+.feedback-message {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -120%); /* Position it above the animal container */
+    font-size: calc(1.6rem * var(--font-scale));
+    font-family: var(--font-family-secondary);
+    font-weight: bold;
+    text-align: center;
+    border-radius: var(--border-radius-md);
+    padding: 0.5rem 1rem;
+    box-shadow: var(--shadow-md);
+    z-index: 20;
+    animation: fadeInOut 2.5s ease forwards;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.feedback-message.success {
+    color: var(--success-color);
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.feedback-message.error {
+    color: var(--error-color);
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -110%); }
+    15% { opacity: 1; transform: translate(-50%, -120%); }
+    75% { opacity: 1; transform: translate(-50%, -120%); }
+    100% { opacity: 0; transform: translate(-50%, -130%); }
+}
+
+/* Hide the old feedback text */
+#feedback-text {
+    display: none;
 }
