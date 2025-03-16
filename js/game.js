@@ -36,7 +36,9 @@ const gameState = {
     shuffledAnimals: [],
     leaderboardOrigin: 'game', // Track where user is coming from - 'game' or 'score'
     difficultyLevel: 'beginner', // Added property for adaptive difficulty
-    hintsUsed: 0 // Track hint usage
+    hintsUsed: 0, // Track hint usage
+    learningModeEnabled: false, // Explicitly track if learning mode is enabled
+    adaptiveDifficulty: true // Whether to use adaptive difficulty
 };
 
 // DOM elements
@@ -90,12 +92,167 @@ function getAnimalFunFact(animalName) {
 
 // Handler function for learning mode toggle
 function handleLearningModeToggle() {
+    gameState.learningModeEnabled = this.checked;
+    
     if (this.checked) {
         showHint();
         gameState.hintsUsed++;
     } else {
         hideHint();
     }
+    
+    // Save learning mode preference to localStorage
+    localStorage.setItem('learningModeEnabled', this.checked.toString());
+}
+
+// Create a difficulty selector modal
+function createDifficultyModal() {
+    // Check if modal already exists
+    let modal = document.getElementById('difficulty-modal');
+    if (modal) return modal;
+    
+    // Create modal
+    modal = document.createElement('div');
+    modal.id = 'difficulty-modal';
+    modal.className = 'modal';
+    
+    // Load current settings
+    const currentDifficulty = localStorage.getItem('difficultyLevel') || 'beginner';
+    const adaptiveDifficulty = localStorage.getItem('adaptiveDifficulty') === 'true';
+    
+    // Create modal content
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h2>Game Difficulty</h2>
+            
+            <div class="option-group">
+                <label for="difficulty-select">Difficulty:</label>
+                <select id="difficulty-select">
+                    <option value="beginner" ${currentDifficulty === 'beginner' ? 'selected' : ''}>Beginner (3 tries)</option>
+                    <option value="intermediate" ${currentDifficulty === 'intermediate' ? 'selected' : ''}>Intermediate (2 tries)</option>
+                    <option value="advanced" ${currentDifficulty === 'advanced' ? 'selected' : ''}>Advanced (1 try)</option>
+                </select>
+            </div>
+            
+            <div class="option-group">
+                <label for="adaptive-difficulty">
+                    <input type="checkbox" id="adaptive-difficulty" ${adaptiveDifficulty ? 'checked' : ''}>
+                    Adaptive Difficulty (auto-adjusts based on performance)
+                </label>
+            </div>
+            
+            <p class="difficulty-note">
+                Beginner: 3 tries per animal<br>
+                Intermediate: 2 tries per animal<br>
+                Advanced: 1 try per animal
+            </p>
+            
+            <div class="button-container-accessibility">
+                <button id="save-difficulty" class="primary-btn">Save Settings</button>
+                <button id="close-difficulty" class="secondary-btn">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    document.body.appendChild(modal);
+    
+    // Set up event listeners
+    document.getElementById('save-difficulty').addEventListener('click', saveDifficultySettings);
+    document.getElementById('close-difficulty').addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    // Close when clicking outside modal
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
+    return modal;
+}
+
+// Show difficulty selector modal
+function showDifficultySelector() {
+    const modal = createDifficultyModal();
+    modal.style.display = 'flex';
+}
+
+// Save difficulty settings
+function saveDifficultySettings() {
+    const difficultySelect = document.getElementById('difficulty-select');
+    const adaptiveCheckbox = document.getElementById('adaptive-difficulty');
+    
+    if (difficultySelect && adaptiveCheckbox) {
+        // Save settings
+        const difficulty = difficultySelect.value;
+        const adaptive = adaptiveCheckbox.checked;
+        
+        localStorage.setItem('difficultyLevel', difficulty);
+        localStorage.setItem('adaptiveDifficulty', adaptive.toString());
+        
+        // Update game state
+        gameState.difficultyLevel = difficulty;
+        gameState.adaptiveDifficulty = adaptive;
+        
+        // Update current animal's guesses remaining
+        updateGuessesRemaining();
+        
+        // Close modal
+        const modal = document.getElementById('difficulty-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        // Show confirmation
+        showToast(`Difficulty set to ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`);
+        
+        // Update difficulty indicator
+        updateDifficultyIndicator();
+    }
+}
+
+// Update guesses remaining based on current difficulty
+function updateGuessesRemaining() {
+    // Only update if we're in an active game
+    if (gameState.currentAnimal) {
+        if (gameState.difficultyLevel === 'beginner') {
+            gameState.guessesRemaining = 3;
+        } else if (gameState.difficultyLevel === 'intermediate') {
+            gameState.guessesRemaining = 2;
+        } else {
+            gameState.guessesRemaining = 1;
+        }
+    }
+}
+
+// Create or update difficulty indicator
+function updateDifficultyIndicator() {
+    let indicator = document.getElementById('difficulty-indicator');
+    
+    if (!indicator) {
+        // Create indicator if it doesn't exist
+        indicator = document.createElement('div');
+        indicator.id = 'difficulty-indicator';
+        indicator.className = 'difficulty-indicator';
+        
+        // Add click handler to open difficulty settings
+        indicator.addEventListener('click', showDifficultySelector);
+        
+        // Add it to the game area, near the progress indicator
+        const progressIndicator = document.getElementById('progress-indicator');
+        if (progressIndicator && progressIndicator.parentNode) {
+            progressIndicator.parentNode.insertBefore(indicator, progressIndicator.nextSibling);
+        }
+    }
+    
+    // Update indicator text
+    const difficultyName = gameState.difficultyLevel.charAt(0).toUpperCase() + gameState.difficultyLevel.slice(1);
+    const tries = gameState.difficultyLevel === 'beginner' ? 3 : (gameState.difficultyLevel === 'intermediate' ? 2 : 1);
+    const adaptiveText = gameState.adaptiveDifficulty ? ' (adaptive)' : '';
+    
+    indicator.textContent = `Difficulty: ${difficultyName} - ${tries} ${tries === 1 ? 'try' : 'tries'}${adaptiveText}`;
 }
 
 // Initialize the game
@@ -113,9 +270,22 @@ function initGame() {
     
     // Load difficulty setting from localStorage
     gameState.difficultyLevel = localStorage.getItem('difficultyLevel') || 'beginner';
+    gameState.adaptiveDifficulty = localStorage.getItem('adaptiveDifficulty') === 'true';
+    
+    // If no adaptiveDifficulty setting exists yet, default to true
+    if (localStorage.getItem('adaptiveDifficulty') === null) {
+        gameState.adaptiveDifficulty = true;
+        localStorage.setItem('adaptiveDifficulty', 'true');
+    }
     
     // Create keyboard with vowels highlighted
     createKeyboard();
+    
+    // Set up difficulty UI button
+    setupDifficultyButton();
+    
+    // Update difficulty indicator
+    updateDifficultyIndicator();
     
     // Set up event listeners
     instructionsBtn.addEventListener('click', showInstructions);
@@ -150,12 +320,16 @@ function initGame() {
         // Add listener with named function so we can remove it if needed
         learningModeToggle.addEventListener('change', handleLearningModeToggle);
         
-        // Check if auto-hints is enabled and update checkbox state accordingly
-        const preferences = JSON.parse(localStorage.getItem('accessibilityPreferences') || '{}');
+        // Load the user's saved preference for learning mode
+        const savedLearningMode = localStorage.getItem('learningModeEnabled');
         
-        // Set initial state without triggering the change event
-        if (preferences.autoHints && !learningModeToggle.checked) {
+        // Set checkbox based on saved preference (default to false if not saved)
+        if (savedLearningMode === 'true') {
             learningModeToggle.checked = true;
+            gameState.learningModeEnabled = true;
+        } else {
+            learningModeToggle.checked = false;
+            gameState.learningModeEnabled = false;
         }
     }
     
@@ -172,6 +346,35 @@ function initGame() {
     
     // Always start with instructions first
     showInstructions();
+}
+
+// Set up difficulty button in footer
+function setupDifficultyButton() {
+    // Check if button already exists
+    let difficultyBtn = document.getElementById('difficulty-btn');
+    
+    if (!difficultyBtn) {
+        // Create button
+        difficultyBtn = document.createElement('button');
+        difficultyBtn.id = 'difficulty-btn';
+        difficultyBtn.className = 'icon-btn';
+        difficultyBtn.innerHTML = '<span class="icon">🎮</span> Difficulty';
+        
+        // Add event listener
+        difficultyBtn.addEventListener('click', showDifficultySelector);
+        
+        // Add to footer
+        const footer = document.querySelector('footer');
+        if (footer) {
+            // Insert after leaderboard button but before accessibility button
+            const accessibilityBtn = document.getElementById('accessibility-btn');
+            if (accessibilityBtn) {
+                footer.insertBefore(difficultyBtn, accessibilityBtn);
+            } else {
+                footer.appendChild(difficultyBtn);
+            }
+        }
+    }
 }
 
 // Function to show temporary feedback message
@@ -277,31 +480,9 @@ function loadNextAnimal() {
     const oldHint = document.querySelector('.learning-hint');
     if (oldHint) oldHint.remove();
     
-    // Get accessibility preferences
-    const preferences = JSON.parse(localStorage.getItem('accessibilityPreferences') || '{}');
-
-    // Only show hint if learning mode is checked OR auto-hints is enabled
-    // Also ensure checkbox state matches the auto-hints preference
-    if (learningModeToggle) {
-        // Update checkbox state based on auto-hints preference 
-        // without triggering the change event
-        if (preferences.autoHints && !learningModeToggle.checked) {
-            // Set checked state without triggering change event
-            learningModeToggle.checked = true;
-            // Since we changed programmatically, increment hint counter
-            gameState.hintsUsed++;
-        }
-        
-        // Only show hint if checkbox is actually checked now
-        if (learningModeToggle.checked) {
-            showHint();
-        }
-    } else {
-        // If toggle doesn't exist but auto-hints is enabled, show hint
-        if (preferences.autoHints) {
-            showHint();
-            gameState.hintsUsed++;
-        }
+    // Show hint only if learning mode is actually enabled via checkbox
+    if (learningModeToggle && learningModeToggle.checked) {
+        showHint();
     }
     
     // Re-enable all keyboard keys and reset their styling
@@ -532,28 +713,30 @@ function endGame() {
     // Announce to screen readers
     announceToScreenReader(`Game over! You had ${gameState.correctAnswers} correct and ${gameState.wrongAnswers} wrong.`);
     
-    // Auto-adjust difficulty for next game
-    if (gameState.correctAnswers >= 9) {
-        // Increase difficulty if doing very well
-        if (gameState.difficultyLevel === 'beginner') {
-            gameState.difficultyLevel = 'intermediate';
-            localStorage.setItem('difficultyLevel', 'intermediate');
-            showToast('Great job! Difficulty increased to Intermediate');
-        } else if (gameState.difficultyLevel === 'intermediate') {
-            gameState.difficultyLevel = 'advanced';
-            localStorage.setItem('difficultyLevel', 'advanced');
-            showToast('Impressive! Difficulty increased to Advanced');
-        }
-    } else if (gameState.correctAnswers <= 3) {
-        // Decrease difficulty if struggling
-        if (gameState.difficultyLevel === 'advanced') {
-            gameState.difficultyLevel = 'intermediate';
-            localStorage.setItem('difficultyLevel', 'intermediate');
-            showToast('Difficulty adjusted to Intermediate');
-        } else if (gameState.difficultyLevel === 'intermediate') {
-            gameState.difficultyLevel = 'beginner';
-            localStorage.setItem('difficultyLevel', 'beginner');
-            showToast('Difficulty adjusted to Beginner');
+    // Auto-adjust difficulty only if adaptive difficulty is enabled
+    if (gameState.adaptiveDifficulty) {
+        if (gameState.correctAnswers >= 9) {
+            // Increase difficulty if doing very well
+            if (gameState.difficultyLevel === 'beginner') {
+                gameState.difficultyLevel = 'intermediate';
+                localStorage.setItem('difficultyLevel', 'intermediate');
+                showToast('Great job! Difficulty increased to Intermediate');
+            } else if (gameState.difficultyLevel === 'intermediate') {
+                gameState.difficultyLevel = 'advanced';
+                localStorage.setItem('difficultyLevel', 'advanced');
+                showToast('Impressive! Difficulty increased to Advanced');
+            }
+        } else if (gameState.correctAnswers <= 3) {
+            // Decrease difficulty if struggling
+            if (gameState.difficultyLevel === 'advanced') {
+                gameState.difficultyLevel = 'intermediate';
+                localStorage.setItem('difficultyLevel', 'intermediate');
+                showToast('Difficulty adjusted to Intermediate');
+            } else if (gameState.difficultyLevel === 'intermediate') {
+                gameState.difficultyLevel = 'beginner';
+                localStorage.setItem('difficultyLevel', 'beginner');
+                showToast('Difficulty adjusted to Beginner');
+            }
         }
     }
 }
@@ -740,6 +923,13 @@ const achievements = [
         icon: '🦸',
         description: 'Complete game with no hints',
         condition: (state) => state.correctAnswers >= 8 && state.hintsUsed === 0
+    },
+    {
+        id: 'master',
+        name: 'Master',
+        icon: '👑',
+        description: 'Win on Advanced difficulty',
+        condition: (state) => state.correctAnswers >= 8 && state.difficultyLevel === 'advanced'
     }
 ];
 
@@ -849,7 +1039,9 @@ function restartGame() {
     initGame();
     
     // Show toast with difficulty level
-    showToast(`Playing on ${gameState.difficultyLevel.charAt(0).toUpperCase() + gameState.difficultyLevel.slice(1)} difficulty`);
+    const difficultyName = gameState.difficultyLevel.charAt(0).toUpperCase() + gameState.difficultyLevel.slice(1);
+    const tries = gameState.difficultyLevel === 'beginner' ? 3 : (gameState.difficultyLevel === 'intermediate' ? 2 : 1);
+    showToast(`Playing on ${difficultyName} difficulty (${tries} ${tries === 1 ? 'try' : 'tries'})`);
 }
 
 // Updated sharing dialog function to properly display URL

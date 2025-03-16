@@ -149,6 +149,10 @@ function saveAccessibilityPreferences() {
     const reducedMotionCheckbox = document.getElementById('reduced-motion');
     const autoHintsCheckbox = document.getElementById('auto-hints');
     
+    // Get previous auto-hints value to check if it changed
+    const oldPreferences = JSON.parse(localStorage.getItem('accessibilityPreferences') || '{}');
+    const autoHintsChanged = oldPreferences.autoHints !== (autoHintsCheckbox ? autoHintsCheckbox.checked : false);
+    
     const preferences = {
         fontSize: fontSizeSelect ? fontSizeSelect.value : 'normal',
         highContrast: highContrastCheckbox ? highContrastCheckbox.checked : false,
@@ -159,6 +163,12 @@ function saveAccessibilityPreferences() {
     
     // Save to local storage
     localStorage.setItem('accessibilityPreferences', JSON.stringify(preferences));
+    
+    // If auto-hints was toggled, update the learning mode toggle to match
+    if (autoHintsChanged && window.learningModeToggle) {
+        // Save the learning mode preference explicitly to match auto-hints
+        localStorage.setItem('learningModeEnabled', preferences.autoHints.toString());
+    }
     
     // Apply changes
     applyAccessibilityPreferences();
@@ -210,22 +220,19 @@ function applyAccessibilityPreferences() {
         document.documentElement.classList.remove('reduced-motion');
     }
     
-    // Apply auto hints - ensure we update the checkbox state
-    // but without showing hints if checkbox was manually unchecked
-    if (preferences.autoHints && window.learningModeToggle) {
-        if (!window.learningModeToggle.checked) {
-            // Only set checkbox if it's not already checked
+    // Apply auto-hints - only if it's explicitly enabled
+    if (window.learningModeToggle) {
+        // Get the user's explicit learning mode preference
+        const learningModePreference = localStorage.getItem('learningModeEnabled');
+        
+        if (learningModePreference !== null) {
+            // User has a saved preference - respect it
+            window.learningModeToggle.checked = learningModePreference === 'true';
+        } else if (preferences.autoHints === true) {
+            // No explicit preference, but auto-hints is enabled
             window.learningModeToggle.checked = true;
-            
-            // Show hint since we're enabling it
-            if (typeof showHint === 'function') {
-                showHint();
-            }
+            localStorage.setItem('learningModeEnabled', 'true');
         }
-    } else if (!preferences.autoHints && window.learningModeToggle && window.learningModeToggle.checked) {
-        // If auto-hints is disabled but checkbox is checked, 
-        // leave it checked (user preference)
-        // Do nothing here, respect user's manual choice
     }
 }
 

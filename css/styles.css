@@ -1380,3 +1380,95 @@ footer {
     min-width: 150px; /* Ensure minimum width */
     font-size: calc(1rem * var(--font-scale)); /* Consistent font size */
 }
+/* Difficulty indicator near progress indicator */
+.difficulty-indicator {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    background-color: rgba(255, 193, 7, 0.15);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    margin: 0.25rem 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    width: auto;
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.difficulty-indicator:hover {
+    background-color: rgba(255, 193, 7, 0.3);
+}
+
+/* Space between progress and difficulty indicators */
+#progress-indicator {
+    margin-right: 0.5rem;
+}
+
+/* Difficulty modal styling */
+.difficulty-note {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background-color: rgba(66, 165, 245, 0.1);
+    border-radius: var(--border-radius-md);
+    border-left: 3px solid var(--primary-color);
+    text-align: left;
+}
+
+/* Difficulty option group */
+.option-group {
+    margin: 1rem 0;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.option-group label {
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.option-group select {
+    padding: 0.5rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--light-gray);
+    background-color: white;
+    min-width: 180px;
+    font-family: var(--font-family-primary);
+}
+
+/* Checkbox styling */
+.option-group input[type="checkbox"] {
+    margin-right: 0.5rem;
+    width: 16px;
+    height: 16px;
+}
+
+/* For adaptive difficulty checkbox label that comes after the checkbox */
+.option-group label[for="adaptive-difficulty"] {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+    .difficulty-indicator, 
+    #progress-indicator {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        margin: 0.2rem 0;
+    }
+    
+    /* Stack indicators on very small screens */
+    @media (max-width: 350px) {
+        .difficulty-indicator {
+            margin-top: 0.2rem;
+        }
+    }
+}
