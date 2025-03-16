@@ -762,10 +762,12 @@ function restartGame() {
     showToast(`Playing on ${gameState.difficultyLevel.charAt(0).toUpperCase() + gameState.difficultyLevel.slice(1)} difficulty`);
 }
 
-// Generic sharing dialog
+// Updated sharing dialog function to properly display URL
 function showSharingDialog(text) {
     // Create a modal for sharing options if it doesn't exist
     let sharingModal = document.getElementById('sharing-modal');
+    const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
+    
     if (!sharingModal) {
         sharingModal = document.createElement('div');
         sharingModal.id = 'sharing-modal';
@@ -787,24 +789,31 @@ function showSharingDialog(text) {
         document.body.appendChild(sharingModal);
     }
     
-    // Update the text
-    document.getElementById('share-text').textContent = text;
+    // Format the text with URL on a separate line for better display
+    const formattedText = text.includes(shareUrl) ? 
+        text.replace(shareUrl, '') + `<span class="url">${shareUrl}</span>` : 
+        text;
+    
+    // Update the text with HTML formatting
+    document.getElementById('share-text').innerHTML = formattedText;
     
     // Set up sharing buttons
     document.getElementById('modal-twitter-btn').onclick = function() {
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+        const fullText = text.includes(shareUrl) ? text : text + " " + shareUrl;
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(fullText)}`, '_blank');
         showToast('Opened Twitter sharing');
         sharingModal.style.display = 'none';
     };
     
     document.getElementById('modal-facebook-btn').onclick = function() {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=https://jerlyn.github.io/first-letter-friends/`, '_blank');
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
         showToast('Opened Facebook sharing');
         sharingModal.style.display = 'none';
     };
     
     document.getElementById('modal-copy-btn').onclick = function() {
-        navigator.clipboard.writeText(text).then(() => {
+        const fullText = text.includes(shareUrl) ? text : text + " " + shareUrl;
+        navigator.clipboard.writeText(fullText).then(() => {
             showToast('Copied to clipboard!');
             sharingModal.style.display = 'none';
         }).catch(err => {
@@ -829,7 +838,7 @@ function showSharingDialog(text) {
     });
 }
 
-// Share animal fun fact
+// Share animal fun fact with proper URL formatting
 function shareAnimalFact() {
     if (!gameState.currentAnimal) return;
     
@@ -837,19 +846,19 @@ function shareAnimalFact() {
     const funFact = getAnimalFunFact(animalName).replace('Hint: ', ''); // Remove the "Hint: " prefix
     const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
     
-    const shareText = `I learned about the ${animalName.toLowerCase()} in First Letter Friends! ${funFact} Try it yourself:`;
+    const shareText = `I learned about the ${animalName.toLowerCase()} in First Letter Friends! This animal ${funFact.toLowerCase().substring(funFact.indexOf(' ') + 1)} Try it yourself:`;
     
     // Show sharing options
-    showSharingDialog(shareText);
+    showSharingDialog(shareText + " " + shareUrl);
 }
 
-// Share achievement
+// Share achievement with proper URL formatting
 function shareAchievement(achievement) {
     const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
     const shareText = `I just earned the "${achievement.name}" achievement in First Letter Friends! ${achievement.description}. Try it yourself:`;
     
     // Show sharing options
-    showSharingDialog(shareText);
+    showSharingDialog(shareText + " " + shareUrl);
 }
 
 // Set up event listeners for the animal share button

@@ -127,7 +127,7 @@ p {
     align-items: center;
     width: 100%;
     flex-grow: 1;
-    padding: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-md) 0.5rem;
     background-color: var(--white);
     border-radius: var(--border-radius-md);
 }
@@ -136,7 +136,7 @@ p {
     font-size: calc(1.4rem * var(--font-scale));
     font-family: var(--font-family-secondary);
     text-align: center;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     margin-top: 0.5rem;
     color: var(--text-color);
     line-height: 1.3;
@@ -167,7 +167,7 @@ p {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 0.5rem;
     position: relative;
     overflow: hidden;
     box-shadow: var(--shadow-md);
@@ -197,7 +197,7 @@ p {
 
 /* ===== LEARNING MODE TOGGLE ===== */
 .learning-toggle-container {
-    margin: var(--spacing-xs) 0;
+    margin: 0.25rem 0 0.4rem;
     text-align: center;
     width: 100%;
     display: flex;
@@ -234,8 +234,8 @@ p {
     color: var(--text-color);
     background-color: var(--hint-bg-color);
     border-radius: var(--border-radius-md);
-    padding: var(--spacing-md) var(--spacing-lg);
-    margin: var(--spacing-xs) auto var(--spacing-md);
+    padding: 0.6rem 1rem;
+    margin: 0.25rem auto 0.5rem;
     width: auto;
     max-width: 400px;
     min-width: 220px;
@@ -256,7 +256,7 @@ p {
     font-size: calc(1.8rem * var(--font-scale));
     font-family: var(--font-family-secondary);
     letter-spacing: 4px;
-    margin: var(--spacing-md) 0;
+    margin: 0.4rem 0;
     width: 100%;
     text-align: center;
     display: flex;
@@ -264,7 +264,7 @@ p {
     align-items: center;
     color: var(--text-color);
     order: 2; /* Ensure it appears before keyboard */
-    min-height: 50px;
+    min-height: 40px;
 }
 
 /* First letter highlighting */
@@ -279,7 +279,7 @@ p {
 .keyboard {
     width: 100%;
     max-width: 500px;
-    margin: var(--spacing-sm) auto;
+    margin: 0.25rem auto;
     padding: 0 5px;
     order: 3; /* Ensure it appears after word display */
 }
@@ -287,7 +287,7 @@ p {
 .keyboard-row {
     display: flex;
     justify-content: center;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     width: 100%;
     gap: 8px;
 }
@@ -573,7 +573,7 @@ footer {
 }
 
 .modal-content .primary-btn {
-    margin: var(--spacing-lg) auto var(--spacing-xs);
+    margin: 1rem auto 0.5rem;
     min-width: 120px;
 }
 
@@ -687,19 +687,30 @@ footer {
 
 /* ===== SHARING MODAL ===== */
 .sharing-content {
-    padding: var(--spacing-xl);
+    padding: 1.5rem;
     text-align: center;
 }
 
 .sharing-content p {
-    margin: var(--spacing-lg) 0;
+    margin: 1rem 0;
     text-align: center;
-    font-size: calc(1.2rem * var(--font-scale));
+    font-size: 1.2rem;
     font-family: var(--font-family-secondary);
-    max-height: 150px;
+    max-height: 180px;
     overflow-y: auto;
     line-height: 1.5;
-    padding: 0 var(--spacing-xs);
+    padding: 0 0.5rem;
+    word-break: break-word;
+}
+
+/* URL display in share text */
+.sharing-content p .url {
+    display: block;
+    margin-top: 0.5rem;
+    font-family: var(--font-family-primary);
+    font-size: 1rem;
+    color: var(--primary-color);
+    word-break: break-all;
 }
 
 .share-buttons {
@@ -707,8 +718,8 @@ footer {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    gap: var(--spacing-md);
-    margin: var(--spacing-lg) auto;
+    gap: 0.75rem;
+    margin: 1.25rem auto;
     max-width: 300px;
 }
 
