@@ -206,3 +206,26 @@ function setupKeyboardNavigation() {
         }
     });
 }
+
+// Add screen reader announcements
+function announceToScreenReader(message) {
+    // Create or get the live region
+    let announcer = document.getElementById('screen-reader-announcer');
+    
+    if (!announcer) {
+        announcer = document.createElement('div');
+        announcer.id = 'screen-reader-announcer';
+        announcer.setAttribute('aria-live', 'polite');
+        announcer.setAttribute('aria-atomic', 'true');
+        announcer.classList.add('sr-only'); // Visually hidden
+        document.body.appendChild(announcer);
+    }
+    
+    // Set the message
+    announcer.textContent = message;
+    
+    // Clear after a short delay
+    setTimeout(() => {
+        announcer.textContent = '';
+    }, 3000);
+}

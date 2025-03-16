@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- Other meta tags and title -->
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>First Letter Friends</title>
+        
+        <!-- Add this preconnect for faster Google Fonts loading -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        
+        <!-- Add this Google Fonts link for Quicksand and Patrick Hand -->
+        <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+     
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/enhanced-styles.css">  
+    <link rel="stylesheet" href="css/word-position-fix.css">
+    <meta name="description" content="An educational game for toddlers to learn animal names and their starting letters">
+</head>
+<body>
+    <!-- Main Game Screen -->
+    <main id="game-screen" class="screen active">
+        <h1>First Letter Friends</h1>
+        
+        <div class="game-area">
+            <div class="learning-mode-toggle">
+                <label>
+                    <input type="checkbox" id="learning-mode">
+                    Learning Mode
+                </label>
+            </div>
+            
+            <p id="game-question" class="question">Which letter does this animal start with?</p>
+            
+            <div class="animal-container" aria-live="polite">
+                <img id="animal-image" src="assets/images/cat.png" alt="Animal to guess" class="animal-image">
+                <p id="feedback-text" class="hidden"></p>
+            </div>
+            
+            <p id="word-display" class="word-display"></p>
+            
+            <div class="keyboard" role="group" aria-label="Letter keyboard">
+                <!-- Keyboard will be generated via JavaScript -->
+            </div>
+        </div>
+        
+        <footer>
+            <button id="leaderboard-btn" class="icon-btn"><span class="icon">🏆</span> Leaderboard</button>
+            <button id="instructions-btn" class="icon-btn"><span class="icon">❓</span> Instructions</button>
+            <button id="accessibility-btn" class="icon-btn"><span class="icon">♿</span> Accessibility</button>
+            <p class="copyright">Created by Jerlyn | © 2025</p>
+        </footer>
+    </main>
+    
+    <!-- Score Screen -->
+    <div id="score-screen" class="screen">
+        <h1>First Letter Friends</h1>
+        
+        <div class="score-container">
+            <h2>You had <span id="correct-count" class="correct">0</span> correct
+                and <span id="wrong-count" class="wrong">0</span> wrong</h2>
+            
+            <div class="initials-input">
+                <h3>Your Initials</h3>
+                <input type="text" id="initials-input" maxlength="3" value="AAA" class="initials-field">
+                <button id="save-score-btn" class="primary-btn">Save Score</button>
+            </div>
+        </div>
+        
+        <div class="achievements">
+            <h3>Achievements</h3>
+            <div id="achievement-container" class="achievement-container"></div>
+        </div>
+        
+        <div class="share-container">
+            <h3>Share your result</h3>
+            <div class="share-buttons">
+                <button id="share-twitter-btn" class="share-btn"><span class="icon">🐦</span> Twitter</button>
+                <button id="share-facebook-btn" class="share-btn"><span class="icon">📘</span> Facebook</button>
+                <button id="copy-result-btn" class="share-btn"><span class="icon">📋</span> Copy</button>
+            </div>
+        </div>
+        
+        <button id="play-again-from-score-btn" class="primary-btn">Play Again</button>
+    </div>
+    
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard-screen" class="screen">
+        <h1>First Letter Friends</h1>
+        
+        <h2>Leaderboard</h2>
+        
+        <table id="leaderboard-table" class="leaderboard-table">
+            <tr>
+                <th>Rank</th>
+                <th>Initials</th>
+                <th>Time</th>
+                <th>Hints</th>
+                <th>Date</th>
+            </tr>
+        </table>
+        
+        <button id="play-again-btn" class="primary-btn">Play Again</button>
+    </div>
+    
+    <!-- Instructions Modal -->
+    <div id="instructions-modal" class="modal show-on-start">
+        <div class="modal-content">
+            <h2>How to Play</h2>
+            <p>Select the letter the animal starts with.</p>
+            <p>You get 3 tries for each animal.</p>
+            <p>Each game has 10 animals to identify.</p>
+            <button id="close-instructions" class="primary-btn">Got it</button>
+        </div>
+    </div>
+
+    <style>
+        /* Force checkbox to be visible */
+        #learning-mode {
+            -webkit-appearance: checkbox !important;
+            -moz-appearance: checkbox !important;
+            appearance: checkbox !important;
+            opacity: 1 !important;
+            position: static !important;
+            width: auto !important;
+            height: auto !important;
+            margin-right: 8px !important;
+            display: inline-block !important;
+            cursor: pointer !important;
+        }
+        
+        /* Simple hint styling */
+        .learning-hint {
+            font-size: 0.9rem;
+            margin: 1rem auto;
+            padding: 0.8rem 1.2rem;
+            background-color: rgba(129, 199, 132, 0.2);
+            border-radius: 16px;
+            border-left: 4px solid #81C784;
+            max-width: 90%;
+            text-align: center;
+        }
+    </style>
+    
+    <script>
+        // Simple immediate fix for learning mode
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkbox = document.getElementById('learning-mode');
+            if (checkbox) {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        showHint();
+                    } else {
+                        hideHint();
+                    }
+                });
+            }
+            
+            function showHint() {
+                if (!window.gameState || !window.gameState.currentAnimal) return;
+                
+                // Remove existing hint
+                hideHint();
+                
+                // Create hint
+                const hint = document.createElement('div');
+                hint.className = 'learning-hint';
+                hint.textContent = getHintText(window.gameState.currentAnimal.name);
+                
+                // Insert after animal container
+                const container = document.querySelector('.animal-container');
+                if (container) {
+                    container.insertAdjacentElement('afterend', hint);
+                }
+            }
+            
+            function hideHint() {
+                const hint = document.querySelector('.learning-hint');
+                if (hint) hint.remove();
+            }
+            
+            function getHintText(animalName) {
+                const hints = {
+                    'Alligator': 'Hint: This animal has lots of sharp teeth and lives in swamps!',
+                    'Butterfly': 'Hint: This colorful animal used to be a caterpillar!',
+                    'Cheetah': 'Hint: This animal is the fastest runner in the world!',
+                    'Dolphin': 'Hint: This animal is very smart and loves to swim and jump in the ocean!',
+                    'Elephant': 'Hint: This animal has a very long nose called a trunk!',
+                    'Fox': 'Hint: This animal is clever and has a bushy tail!',
+                    'Goat': 'Hint: This animal loves to climb and eat grass!',
+                    'Hamster': 'Hint: This small, furry animal likes to keep food in its cheeks!',
+                    'Iguana': 'Hint: This animal is like a little dragon with scaly skin!',
+                    'Jellyfish': 'Hint: This animal lives in the ocean and has squishy tentacles!',
+                    'Kangaroo': 'Hint: This animal has a pouch for carrying its babies!',
+                    'Lion': 'Hint: This animal is called the king of the jungle!',
+                    'Monkey': 'Hint: This animal loves to climb trees and eat bananas!',
+                    'Narwhal': 'Hint: This animal looks like a unicorn of the sea!',
+                    'Owl': 'Hint: This animal is awake at night and can turn its head all the way around!',
+                    'Pig': 'Hint: This animal says oink-oink and loves to roll in mud!',
+                    'Quail': 'Hint: This small bird has a cute little feather on top of its head!',
+                    'Rhino': 'Hint: This big animal has a horn on its nose!',
+                    'Spider': 'Hint: This small animal makes webs to catch bugs!',
+                    'Turtle': 'Hint: This animal carries its house on its back!',
+                    'Umbrellabird': 'Hint: This bird has feathers on its head that look like an umbrella!',
+                    'Vulture': 'Hint: This big bird soars high in the sky looking for food!',
+                    'Walrus': 'Hint: This animal has long tusks and loves to swim in cold water!',
+                    'Yak': 'Hint: This animal is like a big, hairy cow that lives in the mountains!',
+                    'Zebra': 'Hint: This animal has black and white stripes all over its body!'
+                };
+                
+                return hints[animalName] || 'Hint: This is a fun animal!';
+            }
+        });
+    </script>
+    
+    <!-- Scripts -->
+    <script src="js/game.js"></script>
+    <script src="js/leaderboard.js"></script>
+    <script src="js/accessibility.js"></script>
+<script src="js/confetti.js"></script>
+<script src="js/enhanced-features.js"></script>
+<script src="js/word-position-fix.js"></script>
+<script src="js/custom-checkbox.js"></script>
+<script src="js/ui-fixes.js"></script>
+</body>
+</html>

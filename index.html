@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <!-- Other meta tags and title -->
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>First Letter Friends</title>
-        
-        <!-- Add this preconnect for faster Google Fonts loading -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        
-        <!-- Add this Google Fonts link -->
-        <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&family=Nunito:wght@400;700&family=Quicksand:wght@400;500;700&family=Varela+Round&display=swap" rel="stylesheet">
-        
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Letter Friends</title>
+    
+    <!-- Add this preconnect for faster Google Fonts loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Add this Google Fonts link for Quicksand and Patrick Hand -->
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+     
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/enhanced-styles.css">  
-    <link rel="stylesheet" href="css/word-position-fix.css">
     <meta name="description" content="An educational game for toddlers to learn animal names and their starting letters">
 </head>
 <body>
@@ -32,10 +29,13 @@
                 </label>
             </div>
             
+            <div id="progress-indicator" class="progress-indicator">Animal 1 of 10</div>
+            
             <p id="game-question" class="question">Which letter does this animal start with?</p>
             
             <div class="animal-container" aria-live="polite">
                 <img id="animal-image" src="assets/images/cat.png" alt="Animal to guess" class="animal-image">
+                <button class="animal-share-btn" aria-label="Share this animal fact"><span class="icon">📤</span></button>
                 <p id="feedback-text" class="hidden"></p>
             </div>
             
@@ -102,7 +102,10 @@
             </tr>
         </table>
         
-        <button id="play-again-btn" class="primary-btn">Play Again</button>
+        <div class="button-container">
+            <button id="back-to-score-btn" class="back-btn">Back to Score</button>
+            <button id="play-again-btn" class="primary-btn">Play Again</button>
+        </div>
     </div>
     
     <!-- Instructions Modal -->
@@ -120,8 +123,5 @@
     <script src="js/game.js"></script>
     <script src="js/leaderboard.js"></script>
     <script src="js/accessibility.js"></script>
-<script src="js/confetti.js"></script>
-<script src="js/enhanced-features.js"></script>
-<script src="js/word-position-fix.js"></script>
 </body>
 </html>

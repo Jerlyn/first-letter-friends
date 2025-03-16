@@ -47,10 +47,9 @@ const learningModeToggle = document.getElementById('learning-mode');
 const leaderboardBtn = document.getElementById('leaderboard-btn');
 const playAgainBtn = document.getElementById('play-again-btn');
 const playAgainFromScoreBtn = document.getElementById('play-again-from-score-btn');
-const backToScoreBtn = document.getElementById('back-to-score-btn');
 
 // Sound effects
-let soundEnabled = true;
+const soundEnabled = true;
 
 // Function to get a fun fact about an animal for toddlers
 function getAnimalFunFact(animalName) {
@@ -97,7 +96,7 @@ function initGame() {
     gameState.wrongAnswers = 0;
     gameState.startTime = Date.now();
     
-    // Create keyboard with vowels highlighted
+    // Create keyboard
     createKeyboard();
     
     // Set up event listeners
@@ -117,34 +116,17 @@ function initGame() {
         playAgainFromScoreBtn.addEventListener('click', restartGame);
     }
     
-    if (backToScoreBtn) {
-        backToScoreBtn.addEventListener('click', backToScore);
-    }
-    
-    // Set up learning mode toggle
-    if (learningModeToggle) {
-        learningModeToggle.addEventListener('change', function() {
-            if (this.checked) {
-                showHint();
-            } else {
-                hideHint();
-            }
-        });
-    }
-    
-    // Set up share button
-    setupAnimalShareButton();
-    
     // Always start with instructions first
     showInstructions();
+    
+    // Don't load the first animal until instructions are closed
+    // This will be called in the closeInstructions handler
 }
 
 // Load the next animal
 function loadNextAnimal() {
     // End game after 10 animals or if we've gone through all shuffled animals
     if (gameState.currentIndex >= 10 || gameState.currentIndex >= gameState.shuffledAnimals.length) {
-        // Start confetti for game completion
-        startConfetti();
         endGame();
         return;
     }
@@ -159,11 +141,8 @@ function loadNextAnimal() {
     // Hide any previous feedback
     feedbackText.classList.add('hidden');
     
-    // Reset word display and ensure it's in the correct position
+    // Reset word display
     wordDisplay.textContent = '';
-    
-    // Update progress indicator
-    updateProgressIndicator();
     
     // Remove old hint if exists
     const oldHint = document.querySelector('.learning-hint');
@@ -171,7 +150,19 @@ function loadNextAnimal() {
     
     // Show hint if in learning mode
     if (learningModeToggle && learningModeToggle.checked) {
-        showHint();
+        // Get a fun fact instead of directly revealing the first letter
+        const funFact = getAnimalFunFact(gameState.currentAnimal.name);
+        
+        // Create new hint element
+        const hintElement = document.createElement('div');
+        hintElement.className = 'learning-hint';
+        hintElement.textContent = funFact;
+        
+        // Get the animal container
+        const animalContainer = document.querySelector('.animal-container');
+        
+        // Insert hint AFTER the animal container (not before)
+        animalContainer.insertAdjacentElement('afterend', hintElement);
     }
     
     // Re-enable all keyboard keys and reset their styling
@@ -179,19 +170,15 @@ function loadNextAnimal() {
         key.disabled = false;
         key.classList.remove('correct', 'wrong', 'absent', 'present');
     });
-    
-    // Announce to screen readers
-    announceToScreenReader(`New animal. What letter does a ${gameState.currentAnimal.name} start with?`);
 }
 
-// Create the keyboard with vowels highlighted
+// Create the keyboard
 function createKeyboard() {
     const keyboardRows = [
         'QWERTYUIOP',
         'ASDFGHJKL',
         'ZXCVBNM'
     ];
-    const vowels = ['A', 'E', 'I', 'O', 'U'];
     
     const keyboardElement = document.querySelector('.keyboard');
     keyboardElement.innerHTML = '';
@@ -203,12 +190,6 @@ function createKeyboard() {
         [...row].forEach(letter => {
             const keyElement = document.createElement('button');
             keyElement.className = 'key';
-            
-            // Add vowel class for vowels
-            if (vowels.includes(letter)) {
-                keyElement.classList.add('vowel');
-            }
-            
             keyElement.textContent = letter;
             keyElement.dataset.key = letter;
             keyElement.setAttribute('aria-label', letter);
@@ -250,9 +231,6 @@ function handleCorrectAnswer() {
     // Disable keyboard temporarily
     disableKeyboard();
     
-    // Announce to screen readers
-    announceToScreenReader(`Correct! ${gameState.currentAnimal.name} starts with ${gameState.currentAnimal.name.charAt(0)}`);
-    
     // Move to next animal after delay
     setTimeout(() => {
         gameState.currentIndex++;
@@ -273,24 +251,18 @@ function handleWrongAnswer(letter) {
     // Show feedback
     feedbackText.textContent = 'Try again';
     feedbackText.classList.remove('hidden');
-    feedbackText.style.color = 'var(--error-color)';
+    feedbackText.style.color = 'var(--incorrect-color)';
     
-    // Mark the key as wrong
+    // Mark the key as wrong - use new wrong class instead of absent
     const wrongKey = document.querySelector(`.key[data-key="${letter}"]`);
     if (wrongKey) {
         wrongKey.classList.add('wrong');
     }
     
-    // Announce to screen readers
-    announceToScreenReader(`Incorrect. ${gameState.guessesRemaining} tries left.`);
-    
     // If out of guesses, show correct answer and move on
     if (gameState.guessesRemaining <= 0) {
         displayWord();
         disableKeyboard();
-        
-        // Announce to screen readers
-        announceToScreenReader(`Out of tries. The answer is ${gameState.currentAnimal.name}, which starts with ${gameState.currentAnimal.name.charAt(0)}`);
         
         setTimeout(() => {
             gameState.currentIndex++;
@@ -308,30 +280,6 @@ function displayWord() {
     // Create the display with appropriate styling - first letter underlined and green
     wordDisplay.innerHTML = `<span class="first-letter">${firstLetter}</span>${restOfWord}`;
     
-    // Move the word display to be after the animal container if it's not already
-    const animalContainer = document.querySelector('.animal-container');
-    if (animalContainer && wordDisplay) {
-        // Remove word display from its current position
-        if (wordDisplay.parentNode) {
-            wordDisplay.parentNode.removeChild(wordDisplay);
-        }
-        
-        // Insert directly after animal container
-        animalContainer.insertAdjacentElement('afterend', wordDisplay);
-        
-        // If there's a hint, move it after the word display
-        const hint = document.querySelector('.learning-hint');
-        if (hint) {
-            // Remove hint from its current position
-            if (hint.parentNode) {
-                hint.parentNode.removeChild(hint);
-            }
-            
-            // Insert after word display
-            wordDisplay.insertAdjacentElement('afterend', hint);
-        }
-    }
-    
     // Update key styling to show the correct letter
     const correctKey = document.querySelector(`.key[data-key="${firstLetter.toUpperCase()}"]`);
     if (correctKey) {
@@ -346,55 +294,8 @@ function disableKeyboard() {
     });
 }
 
-// Function to update progress indicator
-function updateProgressIndicator() {
-    const progressIndicator = document.getElementById('progress-indicator');
-    if (progressIndicator) {
-        progressIndicator.textContent = `Animal ${gameState.currentIndex + 1} of 10`;
-    }
-}
-
-// Show hint for current animal
-function showHint() {
-    // Remove existing hint
-    hideHint();
-    
-    // Check if we have current animal
-    if (!gameState.currentAnimal) return;
-    
-    // Get hint for current animal
-    const hint = getAnimalFunFact(gameState.currentAnimal.name);
-    
-    // Create hint element
-    const hintElement = document.createElement('div');
-    hintElement.className = 'learning-hint';
-    hintElement.textContent = hint;
-    
-    // Add after animal container or word display if it exists
-    const wordElement = document.querySelector('.word-display');
-    if (wordElement && wordElement.textContent.trim() !== '') {
-        wordElement.insertAdjacentElement('afterend', hintElement);
-    } else {
-        const animalContainer = document.querySelector('.animal-container');
-        if (animalContainer) {
-            animalContainer.insertAdjacentElement('afterend', hintElement);
-        }
-    }
-    
-    // Announce to screen readers
-    announceToScreenReader(hint);
-}
-
-// Hide any visible hints
-function hideHint() {
-    const hint = document.querySelector('.learning-hint');
-    if (hint) hint.remove();
-}
-
 // Play sound
 function playSound(type) {
-    if (!soundEnabled) return;
-    
     try {
         const audio = new Audio(`assets/audio/${type}.mp3`);
         audio.play().catch(e => console.log('Audio play failed:', e));
@@ -416,9 +317,6 @@ function endGame() {
     
     // Display achievements
     displayAchievements(newlyUnlocked);
-    
-    // Announce to screen readers
-    announceToScreenReader(`Game over! You had ${gameState.correctAnswers} correct and ${gameState.wrongAnswers} wrong.`);
 }
 
 // Show instructions modal
@@ -589,7 +487,7 @@ function checkAchievements() {
     return newlyUnlocked;
 }
 
-// Display achievements with share buttons
+// Display achievements on the score screen
 function displayAchievements(newlyUnlocked) {
     const achievementContainer = document.getElementById('achievement-container');
     if (!achievementContainer) return;
@@ -611,21 +509,37 @@ function displayAchievements(newlyUnlocked) {
         badgeElement.innerHTML = `
             <div class="icon">${achievement.icon}</div>
             <div class="name">${achievement.name}</div>
-            ${isUnlocked ? '<button class="achievement-share-btn" aria-label="Share achievement">📤</button>' : ''}
         `;
         
-        // Add share event listener if unlocked
-        if (isUnlocked) {
-            const shareBtn = badgeElement.querySelector('.achievement-share-btn');
-            if (shareBtn) {
-                shareBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    shareAchievement(achievement);
-                });
-            }
-        }
-        
         achievementContainer.appendChild(badgeElement);
+    });
+}
+
+// Learning mode toggle handler
+if (learningModeToggle) {
+    learningModeToggle.addEventListener('change', () => {
+        // If turning on learning mode, show hint for current animal
+        if (learningModeToggle.checked && gameState.currentAnimal) {
+            // Get a fun fact instead of directly revealing the first letter
+            const funFact = getAnimalFunFact(gameState.currentAnimal.name);
+            
+            // Remove old hint if exists
+            const oldHint = document.querySelector('.learning-hint');
+            if (oldHint) oldHint.remove();
+            
+            // Create and add new hint
+            const hintElement = document.createElement('div');
+            hintElement.className = 'learning-hint';
+            hintElement.textContent = funFact;
+            
+            // Get the animal container and add the hint after it
+            const animalContainer = document.querySelector('.animal-container');
+            animalContainer.insertAdjacentElement('afterend', hintElement);
+        } else {
+            // If turning off, remove hint
+            const oldHint = document.querySelector('.learning-hint');
+            if (oldHint) oldHint.remove();
+        }
     });
 }
 
@@ -643,15 +557,6 @@ function showLeaderboard() {
     displayLeaderboard();
 }
 
-// Go back to score screen from leaderboard
-function backToScore() {
-    // Hide leaderboard screen
-    document.getElementById('leaderboard-screen').classList.remove('active');
-    
-    // Show score screen
-    document.getElementById('score-screen').classList.add('active');
-}
-
 // Restart game
 function restartGame() {
     // Hide all screens
@@ -659,153 +564,203 @@ function restartGame() {
         screen.classList.remove('active');
     });
     
-    // Show game screen
-    document.getElementById('game-screen').classList.add('active');
-    
     // Initialize game
     initGame();
 }
 
-// Share animal fun fact
-function shareAnimalFact() {
-    if (!gameState.currentAnimal) return;
-    
-    const animalName = gameState.currentAnimal.name;
-    const funFact = getAnimalFunFact(animalName).replace('Hint: ', ''); // Remove the "Hint: " prefix
-    const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
-    
-    const shareText = `I learned about the ${animalName.toLowerCase()} in First Letter Friends! ${funFact} Try it yourself: ${shareUrl}`;
-    
-    // Show sharing options
-    showSharingDialog(shareText);
+// Function to save score - defined in leaderboard.js but needed for reference
+function saveScore(timeElapsed) {
+    // This function is implemented in leaderboard.js
+    // It saves the player's score to localStorage
 }
 
-// Share achievement
-function shareAchievement(achievement) {
-    const shareUrl = "https://jerlyn.github.io/first-letter-friends/";
-    const shareText = `I just earned the "${achievement.name}" achievement in First Letter Friends! ${achievement.description}. Try it yourself: ${shareUrl}`;
-    
-    // Show sharing options
-    showSharingDialog(shareText);
-}
-
-// Generic sharing dialog
-function showSharingDialog(text) {
-    // Create a modal for sharing options if it doesn't exist
-    let sharingModal = document.getElementById('sharing-modal');
-    if (!sharingModal) {
-        sharingModal = document.createElement('div');
-        sharingModal.id = 'sharing-modal';
-        sharingModal.className = 'modal';
-        
-        sharingModal.innerHTML = `
-            <div class="modal-content sharing-content">
-                <h3>Share</h3>
-                <p id="share-text"></p>
-                <div class="share-buttons">
-                    <button id="modal-twitter-btn" class="share-btn"><span class="icon">🐦</span> Twitter</button>
-                    <button id="modal-facebook-btn" class="share-btn"><span class="icon">📘</span> Facebook</button>
-                    <button id="modal-copy-btn" class="share-btn"><span class="icon">📋</span> Copy</button>
-                </div>
-                <button id="close-sharing" class="secondary-btn">Close</button>
-            </div>
-        `;
-        
-        document.body.appendChild(sharingModal);
-    }
-    
-    // Update the text
-    document.getElementById('share-text').textContent = text;
-    
-    // Set up sharing buttons
-    document.getElementById('modal-twitter-btn').addEventListener('click', () => {
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
-        sharingModal.style.display = 'none';
-    });
-    
-    document.getElementById('modal-facebook-btn').addEventListener('click', () => {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=https://jerlyn.github.io/first-letter-friends/`, '_blank');
-        sharingModal.style.display = 'none';
-    });
-    
-    document.getElementById('modal-copy-btn').addEventListener('click', () => {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Copied to clipboard!');
-            sharingModal.style.display = 'none';
-        }).catch(err => {
-            console.error('Could not copy text: ', err);
-        });
-    });
-    
-    // Add close button handler
-    document.getElementById('close-sharing').addEventListener('click', () => {
-        sharingModal.style.display = 'none';
-    });
-    
-    // Display the modal
-    sharingModal.style.display = 'flex';
-}
-
-// Set up event listeners for the animal share button
-function setupAnimalShareButton() {
-    const shareBtn = document.querySelector('.animal-share-btn');
-    if (shareBtn) {
-        shareBtn.addEventListener('click', shareAnimalFact);
-    }
-}
-
-// Simple confetti animation
-function startConfetti() {
-    const confettiContainer = document.createElement('div');
-    confettiContainer.className = 'confetti-container';
-    document.body.appendChild(confettiContainer);
-    
-    // Create confetti pieces
-    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
-                    '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', 
-                    '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'];
-                    
-    // Create confetti pieces
-    for (let i = 0; i < 150; i++) {
-        const confetti = document.createElement('div');
-        confetti.className = 'confetti';
-        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        confetti.style.left = Math.random() * 100 + 'vw';
-        confetti.style.animationDelay = Math.random() * 5 + 's';
-        confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
-        confettiContainer.appendChild(confetti);
-    }
-    
-    // Remove confetti after animation ends
-    setTimeout(() => {
-        if (confettiContainer && confettiContainer.parentNode) {
-            confettiContainer.parentNode.removeChild(confettiContainer);
-        }
-    }, 8000);
-}
-
-// Add screen reader announcements
-function announceToScreenReader(message) {
-    // Create or get the live region
-    let announcer = document.getElementById('screen-reader-announcer');
-    
-    if (!announcer) {
-        announcer = document.createElement('div');
-        announcer.id = 'screen-reader-announcer';
-        announcer.setAttribute('aria-live', 'polite');
-        announcer.setAttribute('aria-atomic', 'true');
-        announcer.classList.add('sr-only'); // Visually hidden
-        document.body.appendChild(announcer);
-    }
-    
-    // Set the message
-    announcer.textContent = message;
-    
-    // Clear after a short delay
-    setTimeout(() => {
-        announcer.textContent = '';
-    }, 3000);
+// Function to display leaderboard - defined in leaderboard.js but needed for reference
+function displayLeaderboard() {
+    // This function is implemented in leaderboard.js
+    // It renders the leaderboard from localStorage data
 }
 
 // Initialize the game when the page loads
-document.addEventListener('DOMContentLoaded', initGame);
+window.addEventListener('DOMContentLoaded', initGame);
+
+/**
+ * Add these functions to your game.js file
+ * Place them near the initGame function
+ */
+
+// Animal hints database
+const animalHints = {
+    'Alligator': 'Hint: This animal has lots of sharp teeth and lives in swamps!',
+    'Butterfly': 'Hint: This colorful animal used to be a caterpillar!',
+    'Cheetah': 'Hint: This animal is the fastest runner in the world!',
+    'Dolphin': 'Hint: This animal is very smart and loves to swim and jump in the ocean!',
+    'Elephant': 'Hint: This animal has a very long nose called a trunk!',
+    'Fox': 'Hint: This animal is clever and has a bushy tail!',
+    'Goat': 'Hint: This animal loves to climb and eat grass!',
+    'Hamster': 'Hint: This small, furry animal likes to keep food in its cheeks!',
+    'Iguana': 'Hint: This animal is like a little dragon with scaly skin!',
+    'Jellyfish': 'Hint: This animal lives in the ocean and has squishy tentacles!',
+    'Kangaroo': 'Hint: This animal has a pouch for carrying its babies!',
+    'Lion': 'Hint: This animal is called the king of the jungle!',
+    'Monkey': 'Hint: This animal loves to climb trees and eat bananas!',
+    'Narwhal': 'Hint: This animal looks like a unicorn of the sea!',
+    'Owl': 'Hint: This animal is awake at night and can turn its head all the way around!',
+    'Pig': 'Hint: This animal says oink-oink and loves to roll in mud!',
+    'Quail': 'Hint: This small bird has a cute little feather on top of its head!',
+    'Rhino': 'Hint: This big animal has a horn on its nose!',
+    'Spider': 'Hint: This small animal makes webs to catch bugs!',
+    'Turtle': 'Hint: This animal carries its house on its back!',
+    'Umbrellabird': 'Hint: This bird has feathers on its head that look like an umbrella!',
+    'Vulture': 'Hint: This big bird soars high in the sky looking for food!',
+    'Walrus': 'Hint: This animal has long tusks and loves to swim in cold water!',
+    'Yak': 'Hint: This animal is like a big, hairy cow that lives in the mountains!',
+    'Zebra': 'Hint: This animal has black and white stripes all over its body!'
+};
+
+// Initialize the learning mode
+function initLearningMode() {
+    // Remove any existing learning mode toggle to avoid duplicates
+    const existingToggles = document.querySelectorAll('.learning-mode-toggle');
+    existingToggles.forEach(toggle => toggle.remove());
+    
+    // Create a new learning mode toggle
+    const toggleContainer = document.createElement('div');
+    toggleContainer.className = 'learning-mode-toggle';
+    toggleContainer.innerHTML = `
+        <label>
+            <input type="checkbox" id="learning-mode-checkbox">
+            Learning Mode
+        </label>
+    `;
+    
+    // Add to game area before the question
+    const gameArea = document.querySelector('.game-area');
+    const question = document.querySelector('.question');
+    if (gameArea && question) {
+        gameArea.insertBefore(toggleContainer, question);
+    }
+    
+    // Set up the event listener
+    const checkbox = document.getElementById('learning-mode-checkbox');
+    if (checkbox) {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                showHint();
+            } else {
+                hideHint();
+            }
+        });
+    }
+}
+
+// Show hint for current animal
+function showHint() {
+    // Remove existing hint
+    hideHint();
+    
+    // Check if we have current animal
+    if (!gameState.currentAnimal) return;
+    
+    // Get hint for current animal
+    const hint = animalHints[gameState.currentAnimal.name] || 'Hint: This is a fun animal!';
+    
+    // Create hint element
+    const hintElement = document.createElement('div');
+    hintElement.className = 'learning-hint';
+    hintElement.textContent = hint;
+    
+    // Add after animal container
+    const animalContainer = document.querySelector('.animal-container');
+    if (animalContainer) {
+        animalContainer.insertAdjacentElement('afterend', hintElement);
+    }
+}
+
+// Hide any visible hints
+function hideHint() {
+    const hint = document.querySelector('.learning-hint');
+    if (hint) hint.remove();
+}
+
+// Modify loadNextAnimal to handle hints
+const originalLoadNextAnimal = loadNextAnimal;
+loadNextAnimal = function() {
+    // Call original function
+    originalLoadNextAnimal.apply(this, arguments);
+    
+    // Check if learning mode is enabled, and if so, show hint
+    setTimeout(() => {
+        const checkbox = document.getElementById('learning-mode-checkbox');
+        if (checkbox && checkbox.checked) {
+            showHint();
+        }
+    }, 100);
+};
+
+// Add this to your initGame function
+function enhanceInitGame() {
+    const originalInitGame = initGame;
+    
+    // Replace with enhanced version
+    initGame = function() {
+        // Call original
+        originalInitGame.apply(this, arguments);
+        
+        // Add our enhancements
+        initLearningMode();
+        addLeaderboardBackButton();
+    };
+}
+
+// Add back button to leaderboard
+function addLeaderboardBackButton() {
+    // Wait for DOM to be ready
+    setTimeout(() => {
+        // Get the leaderboard screen
+        const leaderboardScreen = document.getElementById('leaderboard-screen');
+        if (!leaderboardScreen) return;
+        
+        // Get the play again button
+        const playAgainBtn = leaderboardScreen.querySelector('#play-again-btn');
+        if (!playAgainBtn) return;
+        
+        // Check if we already added the back button
+        if (leaderboardScreen.querySelector('#back-to-score-btn')) return;
+        
+        // Create button container if it doesn't exist
+        let buttonContainer = leaderboardScreen.querySelector('.button-container');
+        if (!buttonContainer) {
+            buttonContainer = document.createElement('div');
+            buttonContainer.className = 'button-container';
+            
+            // Move the play again button into the container
+            const playAgainParent = playAgainBtn.parentNode;
+            playAgainParent.insertBefore(buttonContainer, playAgainBtn);
+            buttonContainer.appendChild(playAgainBtn);
+        }
+        
+        // Create back button
+        const backButton = document.createElement('button');
+        backButton.id = 'back-to-score-btn';
+        backButton.className = 'back-btn';
+        backButton.textContent = 'Back to Score';
+        
+        // Add back button to the container before the play again button
+        buttonContainer.insertBefore(backButton, playAgainBtn);
+        
+        // Add event listener
+        backButton.addEventListener('click', function() {
+            // Hide leaderboard screen
+            leaderboardScreen.classList.remove('active');
+            
+            // Show score screen
+            const scoreScreen = document.getElementById('score-screen');
+            if (scoreScreen) {
+                scoreScreen.classList.add('active');
+            }
+        });
+    }, 300);
+}
+
+// Call to enhance the init game function
+enhanceInitGame();
